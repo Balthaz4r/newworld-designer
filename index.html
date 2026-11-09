@@ -1,680 +1,173 @@
 <!doctype html>
 <html lang="hu">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NEWWORLD DESIGNER 2.0</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEWWORLD DESIGNER 2.1</title>
 <style>
-:root{
- --bg:#0d1621;--panel:#172332;--panel2:#203246;--panel3:#263b51;
- --line:#3b536c;--text:#e7eef8;--muted:#8fa5bd;--blue:#79baff;
- --gold:#f2c56d;--violet:#c49bff;--danger:#e58b91;
-}
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
- font:13px/1.4 Inter,"Segoe UI",Arial,sans-serif}
-button{font:inherit}
-.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 270px;grid-template-rows:54px minmax(0,1fr)}
-header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 15px;background:#141f2c;border-bottom:1px solid #2d4055;z-index:20}
-.brand{font-weight:850;letter-spacing:.055em;font-size:14px}
-.version{color:var(--muted);font-size:11px}
-.header-actions{display:flex;gap:6px;margin-left:12px}
-.btn{border:1px solid #405a75;background:#203247;color:#e2edf8;border-radius:7px;padding:7px 10px;cursor:pointer;font-size:11px}
-.btn:hover:not(:disabled){border-color:var(--blue);background:#2a4159}
-.btn:disabled{opacity:.35;cursor:default}
-.header-hint{margin-left:auto;color:#8da2b8;font-size:10px}
-.workspace{position:relative;overflow:hidden;isolation:isolate;background-color:#0d1621;
- background-image:radial-gradient(#2d4158 .85px,transparent .85px);background-size:24px 24px;touch-action:none}
-#planes{position:absolute;inset:0;pointer-events:none;perspective:1100px;transform-style:preserve-3d}
-.plane{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none;transition:opacity .16s,filter .16s}
-.plane.active{opacity:1;filter:none;z-index:8}
-.plane.inactive{opacity:.20;filter:saturate(.65);z-index:2}
-.plane-outline{position:absolute;inset:22px;border:1px solid #39516a;border-radius:10px;pointer-events:none}
-.plane-label{position:absolute;left:34px;top:28px;color:#93abc4;font-size:9px;letter-spacing:.09em;text-transform:uppercase}
-.node{position:absolute;width:218px;min-height:118px;background:#1b2a3a;border:1px solid #6683a1;border-radius:10px;
- box-shadow:0 8px 24px #0005;pointer-events:auto;user-select:none}
+:root{--bg:#0d1723;--panel:#192838;--panel2:#23384d;--line:#405a74;--text:#e8f0fa;--muted:#91a8c1;--blue:#80bdff;--gold:#f2c66f;--violet:#c7a4ff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:13px "Segoe UI",Arial,sans-serif}
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 258px;grid-template-rows:52px 1fr}
+header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 15px;background:#142130;border-bottom:1px solid #30465d;z-index:30}
+.brand{font-weight:850;letter-spacing:.07em}.ver{font-size:10px;color:var(--muted)}
+.actions{display:flex;gap:6px;margin-left:10px}.btn{border:1px solid #435e79;border-radius:7px;background:#21364b;color:#e4eef9;padding:7px 10px;font-size:11px;cursor:pointer}.btn:hover:not(:disabled){border-color:var(--blue);background:#2b4660}.btn:disabled{opacity:.35;cursor:default}
+.hint{margin-left:auto;color:#8299b2;font-size:10px;letter-spacing:.06em}
+.workspace{position:relative;overflow:hidden;background-color:var(--bg);background-image:radial-gradient(#30465e .85px,transparent .85px);background-size:24px 24px;touch-action:none}
+#planes{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
+.plane{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none;transition:opacity .15s}
+.plane.active{opacity:1;z-index:8}.plane.inactive{opacity:.16;z-index:2}
+.plane-frame{position:absolute;inset:22px;border:1px solid #3a526b;border-radius:10px;pointer-events:none}
+.plane-caption{position:absolute;top:28px;left:34px;color:#91a9c2;font-size:9px;letter-spacing:.1em}
+.node{position:absolute;width:218px;min-height:118px;border:1px solid #6684a3;border-radius:10px;background:#1b2b3b;box-shadow:0 8px 24px #0005;pointer-events:auto;user-select:none}
 .node.selected{outline:2px solid var(--blue);outline-offset:2px}
-.node-head{height:39px;display:flex;align-items:center;gap:8px;padding:0 9px 0 12px;background:#23374b;border-bottom:1px solid #3b536b;border-radius:9px 9px 0 0;cursor:grab;touch-action:none}
-.node-head:active{cursor:grabbing}
-.node-kind{font-size:9px;letter-spacing:.1em;color:#aac9e7;font-weight:850}
-.node-title{font-size:12px;font-weight:750;flex:1}
-.node-tag{font-size:10px;color:#8ea7c1}
-.node-remove{border:0;background:transparent;color:#a7b9cb;font-size:17px;width:21px;height:22px;border-radius:5px;cursor:pointer}
-.node-remove:hover{background:#603e49;color:white}
-.node-content{height:39px;padding:10px 13px 0;display:flex;align-items:center;justify-content:space-between;color:#d0dbe8;font-size:11px}
-.node-foot{padding:0 13px 11px;color:#879db5;font-size:10px}
-.port{position:absolute;width:15px;height:15px;border:2px solid var(--gold);background:#142332;border-radius:50%;box-shadow:0 0 0 2px #101b27;z-index:5;transform:translateY(-50%);cursor:crosshair;pointer-events:auto}
-.port.out{border-color:var(--blue)}
-.port:hover{filter:brightness(1.3);transform:translateY(-50%) scale(1.12)}
-.port.used:after{content:"";position:absolute;inset:3px;border-radius:50%;background:currentColor;opacity:.55}
-.port.in{color:var(--gold)}.port.out{color:var(--blue)}
-#wireSvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:12;pointer-events:none}
-.wire{fill:none;stroke:#83baff;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
-.wire.cross{stroke:#c29aff;stroke-dasharray:7 5;stroke-width:2.2}
-.wire.preview{stroke:var(--gold);stroke-dasharray:6 5}
-.wire.inactive{opacity:.18}
-.wire-mid{fill:var(--gold);stroke:#101b27;stroke-width:2;pointer-events:all;cursor:pointer}
-.wire-mid:hover{r:7}
-.wire-effect{fill:#d8c3ff;stroke:#35294a;stroke-width:1.5}
-#layerBar{position:absolute;top:14px;left:14px;z-index:16;display:flex;align-items:center;gap:7px;
- background:#182738eF;border:1px solid #405872;border-radius:9px;padding:6px 8px;box-shadow:0 8px 24px #0005}
-#layerName{min-width:100px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.04em}
-.layer-count{font-size:10px;color:#9db1c7;white-space:nowrap}
-.layer-nav{width:26px;height:26px;padding:0}
-.shelf{background:#172332;border-left:1px solid #2c4055;padding:15px 13px;overflow:auto;z-index:20}
-.shelf h2{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:#afc0d3;margin:3px 0 11px}
-.module{display:flex;align-items:center;gap:10px;padding:9px;border:1px solid #405771;border-radius:9px;background:#203146;margin-bottom:8px;cursor:grab;user-select:none;touch-action:none}
-.module:active{cursor:grabbing}
-.module-icon{width:29px;height:29px;border-radius:7px;background:#2b4762;color:#b5d8fa;display:grid;place-items:center;font-weight:850;font-size:16px;flex:none}
-.module strong{font-size:11px;display:block}.module small{font-size:9px;color:#93a9c1;display:block;margin-top:2px}
-.module.effect{border-color:#654f80;background:#2a263b}.module.effect .module-icon{background:#48385f;color:#ddc7ff}
-.shelf-note{font-size:10px;color:#849ab2;line-height:1.5;margin:10px 1px 15px}
-.shelf-sep{height:1px;background:#35495e;margin:15px 0}
-#toast{position:absolute;left:16px;bottom:14px;z-index:30;padding:8px 11px;background:#1d2d3f;border:1px solid #405872;border-radius:7px;color:#c7d8e9;font-size:10px;opacity:0;pointer-events:none;transition:opacity .15s}
-#toast.show{opacity:1}
-#empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#8298b0;pointer-events:none;z-index:1}
-#empty strong{display:block;font-size:15px;color:#b1c2d5;margin-bottom:6px}
-#empty span{font-size:11px}
-#dragGhost{position:fixed;z-index:1000;pointer-events:none;padding:10px 13px;border:1px solid var(--blue);border-radius:8px;background:#263b51;box-shadow:0 12px 28px #0009;font-weight:750;display:none}
-#modalShade{position:fixed;inset:0;background:#050a10aa;z-index:100;display:none;place-items:center}
-.modal{width:min(390px,calc(100vw - 32px));background:#1b2939;border:1px solid #526b86;border-radius:12px;padding:17px;box-shadow:0 20px 60px #000b}
-.modal h3{margin:0 0 8px;font-size:14px}.modal p{margin:0 0 17px;color:#a9bbcf;font-size:11px;line-height:1.55}
-.modal-actions{display:flex;justify-content:flex-end;gap:8px}
-.effect-menu{position:fixed;z-index:80;background:#1c2b3c;border:1px solid #6c598a;border-radius:9px;padding:7px;box-shadow:0 12px 35px #0009;display:none;min-width:165px}
-.effect-menu button{display:block;width:100%;text-align:left;border:0;background:transparent;color:#e4d9f5;padding:7px 9px;border-radius:5px;font-size:11px;cursor:pointer}
-.effect-menu button:hover{background:#3b3150}
-@media(max-width:760px){.app{grid-template-columns:minmax(0,1fr) 205px}.header-hint{display:none}.shelf{padding:12px 8px}}
-</style>
-</head>
+.node-head{height:39px;display:flex;align-items:center;gap:8px;padding:0 9px 0 12px;background:#24394e;border-bottom:1px solid #3b546d;border-radius:9px 9px 0 0;cursor:grab;touch-action:none}
+.node-head:active{cursor:grabbing}.kind{font-size:9px;color:#aecbea;font-weight:850;letter-spacing:.09em}.node-title{font-size:12px;font-weight:750;flex:1}.node-id{font-size:9px;color:#8fa8c1}
+.remove{border:0;background:transparent;color:#9db1c5;font-size:17px;cursor:pointer;width:20px;height:22px;border-radius:4px}.remove:hover{background:#60404b;color:#fff}
+.node-body{height:40px;padding:10px 13px 0;font-size:11px;color:#d3deea}.node-foot{padding:0 13px 11px;color:#8da4bd;font-size:10px}
+.port{position:absolute;width:15px;height:15px;transform:translateY(-50%);border:2px solid var(--gold);border-radius:50%;background:#142231;box-shadow:0 0 0 2px #101b27;z-index:10;cursor:crosshair}
+.port.out{border-color:var(--blue)}.port:hover{filter:brightness(1.3);scale:1.12}.port.used:after{content:"";position:absolute;inset:3px;background:currentColor;border-radius:50%;opacity:.65}
+#links{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:5;pointer-events:none}
+.path{fill:none;stroke:#83bcff;stroke-width:2.35;stroke-linecap:round;stroke-linejoin:round;pointer-events:stroke;cursor:pointer}
+.path.cross{stroke:#c7a3ff;stroke-dasharray:7 5}.path.dim{opacity:.17}.path.preview{stroke:#f2c66f;stroke-dasharray:6 5;pointer-events:none}
+.path-point{fill:#f2c66f;stroke:#152231;stroke-width:2;cursor:pointer;pointer-events:all}
+.path-point.has-effect{fill:#d5baff;stroke:#392c4c}.path-label{font-size:9px;fill:#d9c8f5;pointer-events:none}
+#layerBar{position:absolute;top:13px;left:14px;z-index:20;display:flex;align-items:center;gap:7px;padding:6px 8px;border:1px solid #405a74;border-radius:9px;background:#192a3bed;box-shadow:0 8px 22px #0005}
+#layerName{min-width:90px;text-align:center;font-size:10px;font-weight:850;letter-spacing:.06em}.layerCount{font-size:10px;color:#9bb0c6;white-space:nowrap}.nav{width:26px;height:26px;padding:0}
+.shelf{background:#172535;border-left:1px solid #30465d;padding:15px 13px;overflow:auto;z-index:30}
+.shelf h2{margin:3px 0 11px;font-size:11px;letter-spacing:.11em;color:#b6c7d9}.module{display:flex;align-items:center;gap:10px;padding:9px;margin-bottom:8px;border:1px solid #435d78;border-radius:9px;background:#20364b;cursor:grab;touch-action:none;user-select:none}
+.module:active{cursor:grabbing}.module-icon{width:29px;height:29px;display:grid;place-items:center;flex:none;border-radius:7px;background:#2c4b68;color:#c1e0ff;font-size:17px;font-weight:800}
+.module strong{display:block;font-size:11px}.module small{display:block;margin-top:2px;font-size:9px;color:#95adc5}
+.module.effect{background:#2a263b;border-color:#675281}.module.effect .module-icon{background:#4a3963;color:#e0cbff}
+.note{font-size:10px;line-height:1.5;color:#829ab3;margin:10px 1px 14px}.sep{height:1px;background:#344a61;margin:15px 0}
+#empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#849ab2;pointer-events:none}
+#empty strong{display:block;color:#b8c9dc;font-size:15px;margin-bottom:6px}#empty span{font-size:11px}
+#ghost{position:fixed;z-index:1000;display:none;pointer-events:none;padding:10px 13px;border:1px solid var(--blue);border-radius:8px;background:#263d54;box-shadow:0 12px 28px #0009;font-weight:750}
+#toast{position:absolute;left:15px;bottom:14px;z-index:40;padding:8px 11px;border:1px solid #405a74;border-radius:7px;background:#1d3044;color:#d2e0ef;font-size:10px;opacity:0;pointer-events:none;transition:opacity .15s}#toast.show{opacity:1}
+#menu{position:fixed;z-index:80;display:none;min-width:175px;padding:7px;border:1px solid #715c90;border-radius:9px;background:#1c2b3d;box-shadow:0 12px 35px #0009}
+#menu button{display:block;width:100%;padding:7px 9px;border:0;border-radius:5px;background:transparent;color:#e5dcf2;text-align:left;font-size:11px;cursor:pointer}#menu button:hover{background:#3d3151}
+#shade{position:fixed;inset:0;z-index:90;display:none;place-items:center;background:#050a10aa}.dialog{width:min(390px,calc(100vw - 32px));padding:17px;border:1px solid #526b86;border-radius:12px;background:#1b2b3d;box-shadow:0 20px 60px #000b}.dialog h3{margin:0 0 8px;font-size:14px}.dialog p{margin:0 0 17px;color:#a9bbcf;font-size:11px;line-height:1.5}.dialog-actions{display:flex;justify-content:flex-end;gap:8px}
+@media(max-width:740px){.app{grid-template-columns:minmax(0,1fr) 205px}.hint{display:none}.shelf{padding:12px 8px}}
+</style></head>
 <body>
 <div class="app">
-<header>
- <div class="brand">NEWWORLD DESIGNER</div><div class="version">2.0 · clean rebuild</div>
- <div class="header-actions">
-  <button class="btn" id="undo" disabled title="CTRL+Z">↶ Undo</button>
-  <button class="btn" id="redo" disabled title="CTRL+SHIFT+Z">↷ Redo</button>
- </div>
- <div class="header-hint">NODE WORKSPACE · LAYERED GRAPH</div>
-</header>
+<header><div class="brand">NEWWORLD DESIGNER</div><div class="ver">2.1 · spline foundation</div><div class="actions"><button class="btn" id="undo" disabled>↶ Undo</button><button class="btn" id="redo" disabled>↷ Redo</button></div><div class="hint">NODE WORKSPACE · MODULAR GRAPH</div></header>
 <main class="workspace" id="workspace" tabindex="0">
- <div id="planes"></div>
- <svg id="wireSvg" aria-hidden="true"></svg>
- <div id="layerBar">
-  <button class="btn layer-nav" id="prevLayer" title="Előző réteg">‹</button>
-  <div id="layerName">RÉTEG 1</div>
-  <button class="btn layer-nav" id="nextLayer" title="Következő réteg">›</button>
-  <span class="layer-count" id="layerCount">1 / 1</span>
-  <button class="btn layer-nav" id="deleteLayer" title="Aktív réteg törlése">×</button>
- </div>
- <div id="empty"><div><strong>Üres munkaterület</strong><span>Húzd be jobbról az Oldal modult.</span></div></div>
- <div id="toast"></div>
+ <svg id="links"></svg><div id="planes"></div>
+ <div id="layerBar"><button class="btn nav" id="prev">‹</button><div id="layerName">RÉTEG 1</div><button class="btn nav" id="next">›</button><span class="layerCount" id="layerCount">1 / 1</span><button class="btn nav" id="delLayer">×</button></div>
+ <div id="empty"><div><strong>Üres munkaterület</strong><span>Húzd be jobbról az Oldal modult.</span></div></div><div id="toast"></div>
 </main>
 <aside class="shelf">
- <h2>Világ modulok</h2>
- <div class="module" data-kind="page"><div class="module-icon">▱</div><div><strong>Oldal</strong><small>Üres, alakítható oldal</small></div></div>
+ <h2>VILÁG MODULOK</h2>
+ <div class="module" data-kind="page"><div class="module-icon">▱</div><div><strong>Oldal</strong><small>Üres, alakítható oldalnode</small></div></div>
  <div class="module" data-kind="layer"><div class="module-icon">▤</div><div><strong>Új réteg</strong><small>Az aktív réteg mögé</small></div></div>
- <div class="shelf-note">Az Oldal a tartalmi egység. Később képet, videót, GIF-et, HUD-elemet vagy funkciót rendelhetünk hozzá.</div>
- <div class="shelf-sep"></div>
- <h2>Effekt modulok · Flip</h2>
- <div class="module effect" data-kind="effect" data-effect="left"><div class="module-icon">↶</div><div><strong>Flip · Balra</strong><small>Balra forduló lapátmenet</small></div></div>
- <div class="module effect" data-kind="effect" data-effect="right"><div class="module-icon">↷</div><div><strong>Flip · Jobbra</strong><small>Jobbra forduló lapátmenet</small></div></div>
- <div class="module effect" data-kind="effect" data-effect="up"><div class="module-icon">↟</div><div><strong>Flip · Felfelé</strong><small>Felfelé forduló lapátmenet</small></div></div>
- <div class="module effect" data-kind="effect" data-effect="down"><div class="module-icon">↡</div><div><strong>Flip · Lefelé</strong><small>Lefelé forduló lapátmenet</small></div></div>
+ <div class="note">Az oldal később képet, videót, GIF-et, HUD-elemet és további funkciókat fogadhat.</div>
+ <div class="sep"></div><h2>EFFEKTEK · FLIP</h2>
+ <div class="module effect" data-kind="effect" data-effect="left"><div class="module-icon">↶</div><div><strong>Flip · Balra</strong><small>Balra forduló átmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="right"><div class="module-icon">↷</div><div><strong>Flip · Jobbra</strong><small>Jobbra forduló átmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="up"><div class="module-icon">↟</div><div><strong>Flip · Felfelé</strong><small>Felfelé forduló átmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="down"><div class="module-icon">↡</div><div><strong>Flip · Lefelé</strong><small>Lefelé forduló átmenet</small></div></div>
  <div class="module effect" data-kind="effect" data-effect="depthIn"><div class="module-icon">⤢</div><div><strong>Flip · Mélységbe</strong><small>Hátrafelé forduló átmenet</small></div></div>
  <div class="module effect" data-kind="effect" data-effect="depthOut"><div class="module-icon">⤡</div><div><strong>Flip · Mélységből</strong><small>Előrefelé forduló átmenet</small></div></div>
- <div class="shelf-note">Az effektet húzd egy kapcsolat középpontjára, vagy kattints a Path középső jelölőjére.</div>
-</aside>
+ <div class="note">Az effektet húzd egy Path középpontjára, vagy kattints a középső pontra.</div>
+</aside></div>
+<div id="ghost"></div>
+<div id="menu">
+ <button data-effect="left">Flip · Balra</button><button data-effect="right">Flip · Jobbra</button><button data-effect="up">Flip · Felfelé</button><button data-effect="down">Flip · Lefelé</button><button data-effect="depthIn">Flip · Mélységbe</button><button data-effect="depthOut">Flip · Mélységből</button><button data-effect="none">Effekt eltávolítása</button>
 </div>
-<div id="dragGhost"></div>
-<div id="effectMenu" class="effect-menu">
- <button data-effect="left">Flip · Balra</button><button data-effect="right">Flip · Jobbra</button>
- <button data-effect="up">Flip · Felfelé</button><button data-effect="down">Flip · Lefelé</button>
- <button data-effect="depthIn">Flip · Mélységbe</button><button data-effect="depthOut">Flip · Mélységből</button>
- <button data-effect="none">Effekt eltávolítása</button>
-</div>
-<div id="modalShade"><div class="modal"><h3 id="modalTitle">Megerősítés</h3><p id="modalText"></p><div class="modal-actions"><button class="btn" id="modalCancel">Mégse</button><button class="btn" id="modalConfirm">Törlés</button></div></div></div>
-
+<div id="shade"><div class="dialog"><h3 id="dialogTitle">Megerősítés</h3><p id="dialogText"></p><div class="dialog-actions"><button class="btn" id="cancel">Mégse</button><button class="btn" id="confirm">Törlés</button></div></div></div>
 <script>
-(() => {
+(()=>{
 'use strict';
-
-/* =========================================================
-   DOMAIN MODEL
-   All persistent information lives here. The DOM is a view.
-   ========================================================= */
-const makeId = (prefix, n) => `${prefix}_${n}`;
-const initialState = () => ({
-  layers:[{id:'layer_1',name:'Réteg 1',order:0,nodes:[]}],
-  links:[],
-  activeLayerId:'layer_1',
-  counters:{layer:2,node:1,link:1}
-});
-let state = initialState();
-
-/* =========================================================
-   UI / GESTURE STATE
-   Temporary pointer gestures are deliberately not history.
-   ========================================================= */
-const ui = {
-  shelfDrag:null,
-  nodeDrag:null,
-  connection:null,
-  effectDrop:null,
-  selectedNodeId:null,
-  modalResolve:null,
-  menuLinkId:null
-};
-const $ = id => document.getElementById(id);
-const workspace=$('workspace'), planes=$('planes'), wireSvg=$('wireSvg');
-const ghost=$('dragGhost'), toast=$('toast'), effectMenu=$('effectMenu');
-const GRID=12, NODE_W=218, PORT_GAP=24;
-const SVG='http://www.w3.org/2000/svg';
-const EFFECTS={
- left:'Flip · Balra',right:'Flip · Jobbra',up:'Flip · Felfelé',
- down:'Flip · Lefelé',depthIn:'Flip · Mélységbe',depthOut:'Flip · Mélységből'
-};
-let history=[],historyIndex=-1,toastTimer=null;
-
-/* =========================================================
-   STATE / HISTORY
-   One completed operation creates exactly one history entry.
-   ========================================================= */
-function snapshot(){return JSON.stringify(state)}
-function commit(){
- history=history.slice(0,historyIndex+1);
- history.push(snapshot());
- if(history.length>150)history.shift();
- historyIndex=history.length-1;
- updateHistory();
-}
-function updateHistory(){
- $('undo').disabled=historyIndex<=0;
- $('redo').disabled=historyIndex>=history.length-1;
-}
-function restore(index){
- if(index<0||index>=history.length)return;
- state=JSON.parse(history[index]);historyIndex=index;
- cancelGestures();render();
- updateHistory();
-}
-function undo(){if(historyIndex>0){restore(historyIndex-1);notify('Visszavonva')}}
-function redo(){if(historyIndex<history.length-1){restore(historyIndex+1);notify('Újra végrehajtva')}}
+const $=id=>document.getElementById(id),ws=$('workspace'),planes=$('planes'),svg=$('links'),ghost=$('ghost'),toast=$('toast'),menu=$('menu');
+const NS='http://www.w3.org/2000/svg',W=218,PORT_GAP=24;
+const EFFECT={left:'Flip · Balra',right:'Flip · Jobbra',up:'Flip · Felfelé',down:'Flip · Lefelé',depthIn:'Flip · Mélységbe',depthOut:'Flip · Mélységből'};
+const fresh=()=>({layers:[{id:'layer_1',name:'Réteg 1',nodes:[]}],links:[],active:'layer_1',seq:{layer:2,node:1,link:1}});
+let model=fresh(),history=[],hi=-1,toastTimer,gesture={};
+function snap(){return JSON.stringify(model)}
+function commit(){history=history.slice(0,hi+1);history.push(snap());if(history.length>120)history.shift();hi=history.length-1;historyButtons()}
+function historyButtons(){$('undo').disabled=hi<=0;$('redo').disabled=hi>=history.length-1}
+function restore(i){if(i<0||i>=history.length)return;model=JSON.parse(history[i]);hi=i;cancelGestures();render();historyButtons()}
+function undo(){if(hi>0){restore(hi-1);say('Visszavonva')}}
+function redo(){if(hi<history.length-1){restore(hi+1);say('Újra végrehajtva')}}
 $('undo').onclick=undo;$('redo').onclick=redo;
-document.addEventListener('keydown',e=>{
- if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo()}
- else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo()}
-});
-
-/* =========================================================
-   MODEL QUERIES / PORT INVARIANTS
-   Each port can carry one link. Exactly one free port follows.
-   ========================================================= */
-function layerById(id){return state.layers.find(x=>x.id===id)}
-function nodeById(id){for(const l of state.layers){const n=l.nodes.find(x=>x.id===id);if(n)return n}return null}
-function nodeLayer(id){return state.layers.find(l=>l.nodes.some(n=>n.id===id))}
-function linkById(id){return state.links.find(x=>x.id===id)}
-function linksForNode(id,side){
- return state.links.filter(l=>side==='out'?l.fromNode===id:l.toNode===id)
-  .sort((a,b)=>(side==='out'?a.fromPort-b.fromPort:a.toPort-b.toPort));
-}
-function portCount(id,side){return linksForNode(id,side).length+1}
-function normalizePorts(){
- for(const layer of state.layers)for(const node of layer.nodes){
-  linksForNode(node.id,'out').forEach((l,i)=>l.fromPort=i);
-  linksForNode(node.id,'in').forEach((l,i)=>l.toPort=i);
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo()}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo()}});
+function layer(id){return model.layers.find(l=>l.id===id)}
+function node(id){for(const l of model.layers){const n=l.nodes.find(n=>n.id===id);if(n)return n}return null}
+function nodeLayer(id){return model.layers.find(l=>l.nodes.some(n=>n.id===id))}
+function link(id){return model.links.find(l=>l.id===id)}
+function linksAt(id,side){return model.links.filter(l=>side==='out'?l.from===id:l.to===id).sort((a,b)=>(side==='out'?a.fp-b.fp:a.tp-b.tp))}
+function countPorts(id,side){return linksAt(id,side).length+1}
+function used(id,side,index){return model.links.some(l=>side==='out'?l.from===id&&l.fp===index:l.to===id&&l.tp===index)}
+function normalize(){for(const l of model.layers)for(const n of l.nodes){linksAt(n.id,'out').forEach((x,i)=>x.fp=i);linksAt(n.id,'in').forEach((x,i)=>x.tp=i)}}
+function height(n){return Math.max(118,80+Math.max(countPorts(n.id,'in'),countPorts(n.id,'out'))*PORT_GAP)}
+function offset(l){let a=model.layers.findIndex(x=>x.id===model.active),i=model.layers.findIndex(x=>x.id===l.id),d=i-a;return{x:d*22,y:d*18,z:-d*55}}
+function rect(n){let o=offset(nodeLayer(n.id));return{x:n.x+o.x,y:n.y+o.y,w:W,h:height(n)}}
+function portPoint(id,side,index){let n=node(id),r=rect(n),c=countPorts(id,side);return{x:side==='out'?r.x+r.w:r.x,y:r.y+r.h/2+(index-(c-1)/2)*PORT_GAP}}
+function localPoint(cx,cy){let r=ws.getBoundingClientRect();return{x:cx-r.left,y:cy-r.top}}
+function say(t){toast.textContent=t;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1700)}
+function html(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function dialog(title,text){$('dialogTitle').textContent=title;$('dialogText').textContent=text;$('shade').style.display='grid';return new Promise(resolve=>gesture.dialogResolve=resolve)}
+function closeDialog(v){$('shade').style.display='none';if(gesture.dialogResolve){gesture.dialogResolve(v);gesture.dialogResolve=null}}
+$('cancel').onclick=()=>closeDialog(false);$('confirm').onclick=()=>closeDialog(true);$('shade').addEventListener('pointerdown',e=>{if(e.target===$('shade'))closeDialog(false)});
+function addPage(x,y){let n=model.seq.node++,l=layer(model.active);l.nodes.push({id:`page_${n}`,title:`Oldal ${n}`,num:n,x:Math.max(12,x-W/2),y:Math.max(70,y-48)});render();commit();say(`Oldal ${n} hozzáadva`)}
+function addLayer(){let i=model.layers.findIndex(l=>l.id===model.active),n=model.seq.layer++,l={id:`layer_${n}`,name:`Réteg ${n}`,nodes:[]};model.layers.splice(i+1,0,l);model.layers.forEach((x,j)=>x.order=j);model.active=l.id;render();commit();say(`${l.name} létrehozva`)}
+function switchLayer(d){let i=model.layers.findIndex(l=>l.id===model.active),j=Math.max(0,Math.min(model.layers.length-1,i+d));if(i!==j){model.active=model.layers[j].id;render()}}
+$('prev').onclick=()=>switchLayer(-1);$('next').onclick=()=>switchLayer(1);
+async function deleteLayer(){if(model.layers.length===1){say('Az utolsó réteg nem törölhető');return}let l=layer(model.active);if(!await dialog(`${l.name} törlése?`,`${l.nodes.length} oldal és az érintett kapcsolatok is törlődnek.`))return;let ids=new Set(l.nodes.map(n=>n.id));let oldIndex=model.layers.findIndex(x=>x.id===l.id);model.layers=model.layers.filter(x=>x.id!==l.id);model.links=model.links.filter(x=>!ids.has(x.from)&&!ids.has(x.to));model.layers.forEach((x,i)=>x.order=i);model.active=model.layers[Math.max(0,oldIndex-1)].id;normalize();render();commit();say('Réteg törölve')}
+$('delLayer').onclick=deleteLayer;
+async function deleteNode(id){let n=node(id);if(!n)return;if(!await dialog(`${n.title} törlése?`,'A hozzá tartozó kapcsolatok is törlődnek.'))return;model.layers.forEach(l=>l.nodes=l.nodes.filter(x=>x.id!==id));model.links=model.links.filter(x=>x.from!==id&&x.to!==id);normalize();render();commit();say('Oldal törölve')}
+function pairExists(a,b,except){return model.links.some(l=>l.id!==except&&((l.from===a&&l.to===b)||(l.from===b&&l.to===a)))}
+function connect(s,t){if(s.side!=='out'||t.side!=='in'){say('Kimenetet bemenettel kapcsolj össze');return}if(s.id===t.id){say('Egy oldal önmagához nem kapcsolható');return}if(pairExists(s.id,t.id)){say('Ez az oldal-pár már össze van kötve');return}if(used(s.id,'out',s.index)||used(t.id,'in',t.index)){say('A kiválasztott port foglalt');return}model.links.push({id:`path_${model.seq.link++}`,from:s.id,fp:s.index,to:t.id,tp:t.index,effect:null});normalize();render();commit();say('Path létrehozva')}
+function startPort(id,side,index,e){e.preventDefault();e.stopPropagation();let existing=model.links.find(l=>side==='out'?l.from===id&&l.fp===index:l.to===id&&l.tp===index);gesture.connection=existing?{mode:'move',linkId:existing.id,end:side,source:{id,side,index},cursor:localPoint(e.clientX,e.clientY)}:{mode:'new',source:{id,side,index},cursor:localPoint(e.clientX,e.clientY)};drawLinks()}
+function finishPort(e){let g=gesture.connection;gesture.connection=null;let el=document.elementFromPoint(e.clientX,e.clientY)?.closest('.port');if(!el){drawLinks();return}let t={id:el.dataset.id,side:el.dataset.side,index:+el.dataset.index};if(g.mode==='new'){connect(g.source,t);return}let l=link(g.linkId);if(!l)return;let expect=g.end==='out'?'out':'in';if(t.side!==expect||t.id===(g.end==='out'?l.to:l.from)){say('Nem megfelelő célport');drawLinks();return}if(used(t.id,t.side,t.index)){say('A célport foglalt');drawLinks();return}let other=g.end==='out'?l.to:l.from;if(pairExists(t.id,other,l.id)){say('Ez az oldal-pár már rendelkezik Path-tal');drawLinks();return}if(g.end==='out'){l.from=t.id;l.fp=t.index}else{l.to=t.id;l.tp=t.index}normalize();render();commit();say('Kapcsolat áthelyezve')}
+function addEffect(id,effect){let l=link(id);if(!l)return;l.effect=effect==='none'?null:effect;menu.style.display='none';render();commit();say(effect==='none'?'Effekt eltávolítva':`${EFFECT[effect]} hozzáadva`)}
+function showMenu(id,x,y){gesture.menuLink=id;menu.style.left=`${Math.min(x,innerWidth-190)}px`;menu.style.top=`${Math.min(y,innerHeight-250)}px`;menu.style.display='block'}
+menu.addEventListener('click',e=>{let b=e.target.closest('[data-effect]');if(b&&gesture.menuLink)addEffect(gesture.menuLink,b.dataset.effect)});
+document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target)&&!e.target.closest('.path-point'))menu.style.display='none'});
+/* Cubic spline router: deterministic candidate curves; select the smoothest
+   curve with the fewest obstacle hits. No orthogonal elbows or grid search. */
+function obstacles(exclude,layerId){let l=layer(layerId);return l?l.nodes.filter(n=>!exclude.includes(n.id)).map(n=>{let r=rect(n);return{l:r.x-17,r:r.x+r.w+17,t:r.y-17,b:r.y+r.h+17}}):[]}
+function cubic(p0,p1,p2,p3,t){let u=1-t;return{x:u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x,y:u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y}}
+function curvePath(a,b,avoid,layerId){let dx=b.x-a.x,dy=b.y-a.y,forward=dx>=0,span=Math.max(65,Math.abs(dx)*.43),base=forward?span:-span;let candidates=[0,-55,55,-100,100,-155,155,-220,220];let obs=obstacles(avoid,layerId),best=null;
+ for(let off of candidates){let sign=dy===0?1:Math.sign(dy);let p0={x:a.x,y:a.y},p3={x:b.x,y:b.y};let p1={x:a.x+base,y:a.y+off},p2={x:b.x-base,y:b.y+off};let hits=0,near=0;
+  for(let i=1;i<30;i++){let p=cubic(p0,p1,p2,p3,i/30);for(let r of obs){if(p.x>r.l&&p.x<r.r&&p.y>r.t&&p.y<r.b)hits+=1;else if(p.x>r.l-15&&p.x<r.r+15&&p.y>r.t-15&&p.y<r.b+15)near+=.15}}
+  let score=hits*10000+near*10+Math.abs(off)*.18+Math.abs(off)*.01;
+  if(!best||score<best.score)best={score,p0,p1,p2,p3};
  }
+ let q=best;return `M ${q.p0.x} ${q.p0.y} C ${q.p1.x} ${q.p1.y}, ${q.p2.x} ${q.p2.y}, ${q.p3.x} ${q.p3.y}`;
 }
-function portIsUsed(nodeId,side,index){
- return state.links.some(l=>side==='out'?(l.fromNode===nodeId&&l.fromPort===index):(l.toNode===nodeId&&l.toPort===index));
-}
-function nodeHeight(node){
- return Math.max(118,80+Math.max(portCount(node.id,'in'),portCount(node.id,'out'))*PORT_GAP);
-}
-
-/* =========================================================
-   LAYER MODEL
-   New layers are inserted behind the active layer.
-   Layer identity and link endpoints are independent of view.
-   ========================================================= */
-function addLayer(){
- const activeIndex=state.layers.findIndex(l=>l.id===state.activeLayerId);
- const n=state.counters.layer++;
- const layer={id:makeId('layer',n),name:`Réteg ${n}`,order:0,nodes:[]};
- state.layers.splice(activeIndex+1,0,layer);
- state.layers.forEach((l,i)=>l.order=i);
- state.activeLayerId=layer.id;
- render();commit();notify(`${layer.name} létrehozva az aktív réteg mögött`);
-}
-function switchLayer(delta){
- const index=state.layers.findIndex(l=>l.id===state.activeLayerId);
- const next=Math.max(0,Math.min(state.layers.length-1,index+delta));
- if(next===index)return;
- state.activeLayerId=state.layers[next].id;
- render();
-}
-function setLayer(id){
- if(!layerById(id))return;
- state.activeLayerId=id;render();
-}
-async function deleteActiveLayer(){
- if(state.layers.length<=1){notify('Az utolsó réteg nem törölhető');return}
- const layer=layerById(state.activeLayerId);
- const count=layer.nodes.length;
- const ok=await confirmDialog(`${layer.name} törlése?`,`${count} oldal és az ezekhez tartozó kapcsolatok is törlődnek.`);
- if(!ok)return;
- const ids=new Set(layer.nodes.map(n=>n.id));
- state.layers=state.layers.filter(l=>l.id!==layer.id);
- state.links=state.links.filter(l=>!ids.has(l.fromNode)&&!ids.has(l.toNode));
- state.layers.forEach((l,i)=>l.order=i);
- state.activeLayerId=state.layers[Math.max(0,layer.order-1)].id;
- normalizePorts();render();commit();notify(`${layer.name} törölve`);
-}
-$('prevLayer').onclick=()=>switchLayer(-1);
-$('nextLayer').onclick=()=>switchLayer(1);
-$('deleteLayer').onclick=deleteActiveLayer;
-
-/* =========================================================
-   PAGE NODE OPERATIONS
-   ========================================================= */
-function addPage(layerId,x,y){
- const layer=layerById(layerId);if(!layer)return;
- const n=state.counters.node++;
- layer.nodes.push({id:makeId('page',n),title:`Oldal ${n}`,number:n,x:Math.max(12,x-NODE_W/2),y:Math.max(70,y-45)});
- render();commit();notify(`Oldal ${n} hozzáadva`);
-}
-async function deleteNode(id){
- const node=nodeById(id);if(!node)return;
- const ok=await confirmDialog(`${node.title} törlése?`,'A hozzá tartozó kapcsolatok is törlődnek.');
- if(!ok)return;
- state.layers.forEach(l=>l.nodes=l.nodes.filter(n=>n.id!==id));
- state.links=state.links.filter(l=>l.fromNode!==id&&l.toNode!==id);
- normalizePorts();render();commit();notify(`${node.title} törölve`);
-}
-
-/* =========================================================
-   CONNECTION MODEL
-   Cross-layer links are first-class links with stable endpoints.
-   SHIFT+ARROW changes active target layer without cancelling source.
-   ========================================================= */
-function connect(source,target){
- if(!source||!target)return;
- if(source.side!=='out'||target.side!=='in'){notify('Kimenetet bemenettel kapcsolj össze');return}
- if(source.nodeId===target.nodeId){notify('Egy oldal önmagához nem kapcsolható');return}
- if(portIsUsed(source.nodeId,'out',source.portIndex)||portIsUsed(target.nodeId,'in',target.portIndex)){
-  notify('A kiválasztott port már foglalt');return;
+function svgEl(tag,attrs){let e=document.createElementNS(NS,tag);for(let k in attrs)e.setAttribute(k,attrs[k]);return e}
+function drawLinks(){let r=ws.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);svg.innerHTML='';
+ for(let l of model.links){let la=nodeLayer(l.from),lb=nodeLayer(l.to);if(!la||!lb)continue;let a=portPoint(l.from,'out',l.fp),b=portPoint(l.to,'in',l.tp),cross=la.id!==lb.id;
+  let d;if(cross){let dx=b.x-a.x,dy=b.y-a.y,curve=Math.max(45,Math.min(120,Math.abs(dx)*.16+Math.abs(dy)*.12));d=`M ${a.x} ${a.y} C ${a.x+dx*.32} ${a.y-curve}, ${b.x-dx*.32} ${b.y+curve}, ${b.x} ${b.y}`}
+  else d=curvePath(a,b,[l.from,l.to],la.id);
+  let inactive=cross?(la.id!==model.active&&lb.id!==model.active):(la.id!==model.active);
+  let p=svgEl('path',{d,class:`path${cross?' cross':''}${inactive?' dim':''}`,'data-link':l.id});p.addEventListener('click',e=>{e.stopPropagation();showMenu(l.id,e.clientX,e.clientY)});svg.appendChild(p);
+  try{let mid=p.getPointAtLength(p.getTotalLength()/2),dot=svgEl('circle',{cx:mid.x,cy:mid.y,r:5.5,class:`path-point${l.effect?' has-effect':''}`,'data-link':l.id});dot.addEventListener('click',e=>{e.stopPropagation();showMenu(l.id,e.clientX,e.clientY)});svg.appendChild(dot);if(l.effect){let label=svgEl('text',{x:mid.x+10,y:mid.y-8,class:'path-label'});label.textContent=EFFECT[l.effect];svg.appendChild(label)}}catch(_){}
  }
- state.links.push({
-  id:makeId('path',state.counters.link++),
-  fromNode:source.nodeId,fromPort:source.portIndex,
-  toNode:target.nodeId,toPort:target.portIndex,effect:null
- });
- normalizePorts();render();commit();notify('Path létrehozva');
+ if(gesture.connection?.cursor){let s=gesture.connection.source,p=portPoint(s.id,s.side,s.index),q=gesture.connection.cursor;svg.appendChild(svgEl('path',{d:`M ${p.x} ${p.y} C ${p.x+55} ${p.y},${q.x-55} ${q.y},${q.x} ${q.y}`,class:'path preview'}))}
 }
-function beginConnection(nodeId,side,index,event){
- event.preventDefault();event.stopPropagation();
- const existing=state.links.find(l=>side==='out'?(l.fromNode===nodeId&&l.fromPort===index):(l.toNode===nodeId&&l.toPort===index));
- if(existing){
-  ui.connection={mode:'rewire',linkId:existing.id,end:side==='out'?'from':'to',
-   source:{nodeId,side,portIndex:index},cursor:point(event.clientX,event.clientY)};
- }else{
-  ui.connection={mode:'new',source:{nodeId,side,portIndex:index},cursor:point(event.clientX,event.clientY)};
- }
- drawLinks();
-}
-function finishConnection(event){
- const gesture=ui.connection;ui.connection=null;
- const hit=document.elementFromPoint(event.clientX,event.clientY);
- const port=hit&&hit.closest('.port');
- if(!port){drawLinks();return}
- const target={nodeId:port.dataset.nodeId,side:port.dataset.side,portIndex:Number(port.dataset.index)};
- if(gesture.mode==='new'){connect(gesture.source,target);return}
- const link=linkById(gesture.linkId);if(!link)return;
- const expected=gesture.end==='from'?'out':'in';
- if(target.side!==expected||target.nodeId===(gesture.end==='from'?link.toNode:link.fromNode)){
-  notify('A kapcsolat csak azonos típusú, másik oldal-portjára helyezhető át');drawLinks();return;
- }
- if(portIsUsed(target.nodeId,target.side,target.portIndex)){
-  notify('A célport foglalt');drawLinks();return;
- }
- if(gesture.end==='from'){link.fromNode=target.nodeId;link.fromPort=target.portIndex}
- else{link.toNode=target.nodeId;link.toPort=target.portIndex}
- normalizePorts();render();commit();notify('Kapcsolat áthelyezve');
-}
-
-/* =========================================================
-   EFFECT PLUGINS — effects are data attached to a Path.
-   ========================================================= */
-function setEffect(linkId,effect){
- const link=linkById(linkId);if(!link)return;
- link.effect=effect==='none'?null:effect;
- effectMenu.style.display='none';
- render();commit();
- notify(effect==='none'?'Effekt eltávolítva':`${EFFECTS[effect]} hozzáadva`);
-}
-function openEffectMenu(linkId,x,y){
- ui.menuLinkId=linkId;
- effectMenu.style.left=`${Math.min(x,window.innerWidth-190)}px`;
- effectMenu.style.top=`${Math.min(y,window.innerHeight-250)}px`;
- effectMenu.style.display='block';
-}
-
-/* =========================================================
-   GEOMETRY
-   Screen coordinates are derived from layer position + node data.
-   Layer visual offset is presentation only; never stored in links.
-   ========================================================= */
-function layerOffset(layer){
- const active=state.layers.findIndex(l=>l.id===state.activeLayerId);
- const index=state.layers.findIndex(l=>l.id===layer.id);
- const depth=index-active;
- return {x:depth*22,y:depth*19};
-}
-function nodeScreenRect(node){
- const layer=nodeLayer(node.id),off=layerOffset(layer);
- return {x:node.x+off.x,y:node.y+off.y,w:NODE_W,h:nodeHeight(node),layer};
-}
-function portPoint(nodeId,side,index){
- const node=nodeById(nodeId);if(!node)return{x:0,y:0};
- const rect=nodeScreenRect(node);
- const count=portCount(nodeId,side);
- return {
-  x:side==='out'?rect.x+rect.w:rect.x,
-  y:rect.y+rect.h/2+(index-(count-1)/2)*PORT_GAP
- };
-}
-function obstacles(excludeIds, routeLayerId){
- const layer=layerById(routeLayerId);
- if(!layer)return [];
- return layer.nodes.filter(n=>!excludeIds.includes(n.id)).map(n=>{
-  const r=nodeScreenRect(n);
-  return {left:r.x-13,right:r.x+r.w+13,top:r.y-13,bottom:r.y+r.h+13};
- });
-}
-
-/* =========================================================
-   PATH ROUTER
-   Deterministic orthogonal A* with explicit bend/crossing costs.
-   It routes in screen space and does not mutate graph data.
-   ========================================================= */
-function routeOrthogonal(start,end,excludeIds,linkId){
- const lead=22,step=12;
- const a={x:start.x+lead,y:start.y},b={x:end.x-lead,y:end.y};
- const obs=obstacles(excludeIds,nodeLayer(excludeIds[0])?.id);
- const blocked=(x,y)=>obs.some(r=>x>r.left&&x<r.right&&y>r.top&&y<r.bottom);
- const snap=v=>Math.round(v/step)*step;
- const sx=snap(a.x),sy=snap(a.y),tx=snap(b.x),ty=snap(b.y);
- const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
- const key=(x,y,d)=>`${x}:${y}:${d}`;
- const open=[{x:sx,y:sy,d:-1,g:0,f:Math.abs(tx-sx)+Math.abs(ty-sy),path:[]}];
- const best=new Map();let result=null,iterations=0;
- const minX=-60,minY=-60,maxX=workspace.clientWidth+60,maxY=workspace.clientHeight+60;
- while(open.length&&iterations++<18000){
-  open.sort((a,b)=>a.f-b.f);
-  const cur=open.shift(),k=key(cur.x,cur.y,cur.d);
-  if(best.has(k)&&best.get(k)<=cur.g)continue;
-  best.set(k,cur.g);
-  if(Math.abs(cur.x-tx)<=step&&Math.abs(cur.y-ty)<=step){result=cur;break}
-  for(let d=0;d<4;d++){
-   const [dx,dy]=dirs[d],x=cur.x+dx*step,y=cur.y+dy*step;
-   if(x<minX||y<minY||x>maxX||y>maxY||blocked(x,y))continue;
-   const turn=(cur.d!==-1&&cur.d!==d)?34:0;
-   const g=cur.g+step+turn;
-   const nk=key(x,y,d);
-   if(best.has(nk)&&best.get(nk)<=g)continue;
-   open.push({x,y,d,g,f:g+Math.abs(tx-x)+Math.abs(ty-y),path:cur.path.concat([[x,y]])});
-  }
- }
- if(!result){
-  const mid=(a.x+b.x)/2;
-  return `M ${start.x} ${start.y} L ${a.x} ${a.y} L ${mid} ${a.y} L ${mid} ${b.y} L ${b.x} ${b.y} L ${end.x} ${end.y}`;
- }
- let pts=[[a.x,a.y],...result.path,[b.x,b.y]];
- pts=pts.filter((p,i)=>!i||p[0]!==pts[i-1][0]||p[1]!==pts[i-1][1]);
- const compact=[];
- for(const p of pts){
-  compact.push(p);
-  while(compact.length>=3){
-   const A=compact[compact.length-3],B=compact[compact.length-2],C=compact[compact.length-1];
-   if((A[0]===B[0]&&B[0]===C[0])||(A[1]===B[1]&&B[1]===C[1]))compact.splice(compact.length-2,1);
-   else break;
-  }
- }
- let d=`M ${start.x} ${start.y} L ${a.x} ${a.y}`;
- for(let i=1;i<compact.length-1;i++){
-  const A=compact[i-1],B=compact[i],C=compact[i+1];
-  const u={x:B[0]-A[0],y:B[1]-A[1]},v={x:C[0]-B[0],y:C[1]-B[1]};
-  const lu=Math.hypot(u.x,u.y)||1,lv=Math.hypot(v.x,v.y)||1,r=Math.min(9,lu/2,lv/2);
-  d+=` L ${B[0]-u.x/lu*r} ${B[1]-u.y/lu*r} Q ${B[0]} ${B[1]} ${B[0]+v.x/lv*r} ${B[1]+v.y/lv*r}`;
- }
- const last=compact[compact.length-1];
- d+=` L ${last[0]} ${last[1]} L ${end.x} ${end.y}`;
- return d;
-}
-
-/* =========================================================
-   VIEW RENDERING
-   Full view is rebuilt from state; layer opacity applies to nodes
-   and same-layer links. Cross-layer links remain visibly distinct.
-   ========================================================= */
-function render(){
- planes.innerHTML='';
- const active=state.layers.findIndex(l=>l.id===state.activeLayerId);
- state.layers.forEach((layer,index)=>{
-  const off=layerOffset(layer);
-  const plane=document.createElement('div');
-  plane.className=`plane ${layer.id===state.activeLayerId?'active':'inactive'}`;
-  plane.dataset.layerId=layer.id;
-  plane.style.transform=`translate3d(${off.x}px,${off.y}px,${(index-active)*-65}px)`;
-  plane.innerHTML=`<div class="plane-outline"></div><div class="plane-label">${escapeHtml(layer.name)} ${layer.id===state.activeLayerId?'· AKTÍV':''}</div>`;
-  layer.nodes.forEach(node=>plane.appendChild(renderNode(node)));
-  planes.appendChild(plane);
- });
- $('layerName').textContent=layerById(state.activeLayerId)?.name.toUpperCase()||'RÉTEG';
- $('layerCount').textContent=`${active+1} / ${state.layers.length}`;
- $('prevLayer').disabled=active<=0;$('nextLayer').disabled=active>=state.layers.length-1;
- $('empty').style.display=state.layers.some(l=>l.nodes.length)?'none':'grid';
- drawLinks();
-}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function renderNode(node){
- const el=document.createElement('div');el.className='node';el.dataset.nodeId=node.id;
- const r=nodeScreenRect(node);el.style.left=`${node.x}px`;el.style.top=`${node.y}px`;el.style.height=`${nodeHeight(node)}px`;
- el.innerHTML=`<div class="node-head"><span class="node-kind">OLDAL</span><span class="node-title"></span><span class="node-tag">P${node.number}</span><button class="node-remove" title="Oldal törlése">×</button></div><div class="node-content"><span>▤ &nbsp;Tartalmi oldal</span></div><div class="node-foot">Tartalom még nincs hozzárendelve</div>`;
- el.querySelector('.node-title').textContent=node.title;
- el.querySelector('.node-remove').addEventListener('pointerdown',e=>e.stopPropagation());
- el.querySelector('.node-remove').addEventListener('click',e=>{e.stopPropagation();deleteNode(node.id)});
- if(ui.selectedNodeId===node.id)el.classList.add('selected');
- for(const side of ['in','out']){
-  const count=portCount(node.id,side);
-  for(let i=0;i<count;i++){
-   const p=document.createElement('div');
-   p.className=`port ${side}${portIsUsed(node.id,side,i)?' used':''}`;
-   p.dataset.nodeId=node.id;p.dataset.side=side;p.dataset.index=i;
-   p.style.top=`${nodeHeight(node)/2+(i-(count-1)/2)*PORT_GAP}px`;
-   p.title=`${side==='in'?'Bemenet':'Kimenet'} ${i+1}`;
-   p.addEventListener('pointerdown',e=>beginConnection(node.id,side,i,e));
-   el.appendChild(p);
-  }
- }
- el.querySelector('.node-head').addEventListener('pointerdown',e=>{
-  if(e.target.closest('button'))return;
-  e.preventDefault();e.stopPropagation();
-  if(nodeLayer(node.id).id!==state.activeLayerId){notify('Előbb válts az oldal rétegére');return}
-  ui.selectedNodeId=node.id;
-  const p=point(e.clientX,e.clientY);
-  ui.nodeDrag={id:node.id,dx:p.x-(node.x+layerOffset(nodeLayer(node.id)).x),dy:p.y-(node.y+layerOffset(nodeLayer(node.id)).y),
-   startX:node.x,startY:node.y};
-  el.classList.add('selected');
- });
- return el;
-}
-
-/* =========================================================
-   LINK RENDERING
-   Cross-layer connections are drawn as a bridge between planes.
-   Link identity and endpoints remain unchanged on layer switch.
-   ========================================================= */
-function drawLinks(){
- const rect=workspace.getBoundingClientRect();
- wireSvg.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);
- wireSvg.innerHTML='';
- for(const link of state.links){
-  const fromLayer=nodeLayer(link.fromNode),toLayer=nodeLayer(link.toNode);
-  if(!fromLayer||!toLayer)continue;
-  const a=portPoint(link.fromNode,'out',link.fromPort),b=portPoint(link.toNode,'in',link.toPort);
-  const cross=fromLayer.id!==toLayer.id;
-  let d;
-  if(cross){
-   const dx=b.x-a.x,dy=b.y-a.y;
-   const lift=Math.max(38,Math.min(100,Math.abs(dx)*.16+Math.abs(dy)*.18));
-   d=`M ${a.x} ${a.y} C ${a.x+dx*.28} ${a.y-lift}, ${b.x-dx*.28} ${b.y+lift}, ${b.x} ${b.y}`;
-  }else{
-   d=routeOrthogonal(a,b,[link.fromNode,link.toNode],link.id);
-  }
-  const path=document.createElementNS(SVG,'path');
-  path.setAttribute('d',d);
-  const inactiveLink = cross
-   ? (fromLayer.id!==state.activeLayerId && toLayer.id!==state.activeLayerId)
-   : (fromLayer.id!==state.activeLayerId);
-  path.setAttribute('class',`wire${cross?' cross':''}${inactiveLink?' inactive':''}`);
-  path.dataset.linkId=link.id;wireSvg.appendChild(path);
-  try{
-   const p=path.getPointAtLength(path.getTotalLength()/2);
-   const marker=document.createElementNS(SVG,'circle');
-   marker.setAttribute('cx',p.x);marker.setAttribute('cy',p.y);marker.setAttribute('r','5');
-   marker.setAttribute('class',link.effect?'wire-effect':'wire-mid');
-   marker.dataset.linkId=link.id;
-   marker.addEventListener('click',e=>{e.stopPropagation();openEffectMenu(link.id,e.clientX,e.clientY)});
-   wireSvg.appendChild(marker);
-   if(link.effect){
-    const label=document.createElementNS(SVG,'text');
-    label.setAttribute('x',p.x+9);label.setAttribute('y',p.y-8);
-    label.setAttribute('fill','#d8c3ff');label.setAttribute('font-size','10');
-    label.textContent=EFFECTS[link.effect]||'Flip';wireSvg.appendChild(label);
-   }
-  }catch(_){}
- }
- if(ui.connection&&ui.connection.cursor){
-  const s=ui.connection.source;
-  const p=portPoint(s.nodeId,s.side,s.portIndex),q=ui.connection.cursor;
-  const path=document.createElementNS(SVG,'path');
-  path.setAttribute('class','wire preview');
-  path.setAttribute('d',`M ${p.x} ${p.y} C ${p.x+55} ${p.y},${q.x-55} ${q.y},${q.x} ${q.y}`);
-  wireSvg.appendChild(path);
- }
-}
-
-/* =========================================================
-   COORDINATES / POINTER GESTURES
-   ========================================================= */
-function point(x,y){const r=workspace.getBoundingClientRect();return{x:x-r.left,y:y-r.top}}
-function notify(message){
- toast.textContent=message;toast.classList.add('show');
- clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1800);
-}
+function renderNode(n){let el=document.createElement('div');el.className='node';el.dataset.node=n.id;el.style.left=n.x+'px';el.style.top=n.y+'px';el.style.height=height(n)+'px';
+ el.innerHTML=`<div class="node-head"><span class="kind">OLDAL</span><span class="node-title">${html(n.title)}</span><span class="node-id">P${n.num}</span><button class="remove" title="Törlés">×</button></div><div class="node-body">▤ &nbsp;Tartalmi oldal</div><div class="node-foot">Tartalom még nincs hozzárendelve</div>`;
+ el.querySelector('.remove').addEventListener('pointerdown',e=>e.stopPropagation());el.querySelector('.remove').onclick=e=>{e.stopPropagation();deleteNode(n.id)};
+ for(let side of ['in','out']){let c=countPorts(n.id,side);for(let i=0;i<c;i++){let p=document.createElement('div');p.className=`port ${side}${used(n.id,side,i)?' used':''}`;p.dataset.id=n.id;p.dataset.side=side;p.dataset.index=i;p.style.top=(height(n)/2+(i-(c-1)/2)*PORT_GAP)+'px';p.style[side==='in'?'left':'right']='-8px';p.addEventListener('pointerdown',e=>startPort(n.id,side,i,e));el.appendChild(p)}}
+ el.querySelector('.node-head').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;e.preventDefault();e.stopPropagation();if(nodeLayer(n.id).id!==model.active){say('Előbb válts az oldal rétegére');return}let p=localPoint(e.clientX,e.clientY),o=offset(nodeLayer(n.id));gesture.node={id:n.id,dx:p.x-(n.x+o.x),dy:p.y-(n.y+o.y),sx:n.x,sy:n.y};});
+ return el}
+function render(){planes.innerHTML='';let activeIndex=model.layers.findIndex(l=>l.id===model.active);
+ for(let i=0;i<model.layers.length;i++){let l=model.layers[i],o=offset(l),pl=document.createElement('div');pl.className=`plane ${l.id===model.active?'active':'inactive'}`;pl.style.transform=`translate3d(${o.x}px,${o.y}px,${o.z}px)`;pl.innerHTML=`<div class="plane-frame"></div><div class="plane-caption">${html(l.name)} ${l.id===model.active?'· AKTÍV':''}</div>`;l.nodes.forEach(n=>pl.appendChild(renderNode(n)));planes.appendChild(pl)}
+ $('layerName').textContent=layer(model.active).name.toUpperCase();$('layerCount').textContent=`${activeIndex+1} / ${model.layers.length}`;$('prev').disabled=activeIndex===0;$('next').disabled=activeIndex===model.layers.length-1;$('empty').style.display=model.layers.some(l=>l.nodes.length)?'none':'grid';drawLinks()}
 function cancelGestures(){
- if(ui.shelfDrag){ghost.style.display='none'}
- ui.shelfDrag=null;ui.nodeDrag=null;ui.connection=null;ui.effectDrop=null;
+ if(gesture.node){let n=node(gesture.node.id);if(n){n.x=gesture.node.sx;n.y=gesture.node.sy}}
+ gesture.shelf=null;gesture.node=null;gesture.connection=null;ghost.style.display='none';
+ if(model)drawLinks();
 }
-document.addEventListener('pointermove',e=>{
- if(ui.shelfDrag){ghost.style.left=`${e.clientX+12}px`;ghost.style.top=`${e.clientY+12}px`;return}
- if(ui.nodeDrag){
-  const node=nodeById(ui.nodeDrag.id);if(!node)return;
-  const p=point(e.clientX,e.clientY),off=layerOffset(nodeLayer(node.id));
-  node.x=Math.max(0,p.x-ui.nodeDrag.dx-off.x);node.y=Math.max(60,p.y-ui.nodeDrag.dy-off.y);
-  const el=workspace.querySelector(`.node[data-node-id="${node.id}"]`);
-  if(el){el.style.left=`${node.x}px`;el.style.top=`${node.y}px`}
-  drawLinks();return;
- }
- if(ui.connection){ui.connection.cursor=point(e.clientX,e.clientY);drawLinks()}
-});
-document.addEventListener('pointerup',e=>{
- if(ui.shelfDrag){
-  const drag=ui.shelfDrag;ui.shelfDrag=null;ghost.style.display='none';
-  const r=workspace.getBoundingClientRect(),inside=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
-  if(inside){
-   const p=point(e.clientX,e.clientY);
-   if(drag.kind==='page')addPage(state.activeLayerId,p.x,p.y);
-   else if(drag.kind==='layer')addLayer();
-   else if(drag.kind==='effect'){
-    const hit=document.elementFromPoint(e.clientX,e.clientY);
-    const marker=hit&&hit.closest('[data-link-id]');
-    const linkId=marker?.dataset.linkId;
-    if(linkId)setEffect(linkId,drag.effect);else notify('Az effektet egy Path középpontjára húzd');
-   }
-  }
-  return;
- }
- if(ui.nodeDrag){
-  const d=ui.nodeDrag;ui.nodeDrag=null;
-  const n=nodeById(d.id);
-  if(n&&(n.x!==d.startX||n.y!==d.startY)){commit()}
-  drawLinks();return;
- }
- if(ui.connection){finishConnection(e)}
-});
-document.addEventListener('pointercancel',()=>{cancelGestures();drawLinks()});
-window.addEventListener('blur',()=>{cancelGestures();drawLinks()});
-window.addEventListener('resize',drawLinks);
-
-/* =========================================================
-   MODULE SHELF
-   ========================================================= */
-document.querySelectorAll('.module').forEach(module=>{
- module.addEventListener('pointerdown',e=>{
-  e.preventDefault();
-  const kind=module.dataset.kind;
-  ui.shelfDrag={kind,effect:module.dataset.effect||null};
-  ghost.textContent=kind==='page'?'▱  Új oldal':kind==='layer'?'▤  Új réteg':`✧  ${EFFECTS[module.dataset.effect]}`;
-  ghost.style.display='block';ghost.style.left=`${e.clientX+12}px`;ghost.style.top=`${e.clientY+12}px`;
- });
-});
-
-/* =========================================================
-   LAYER SWITCH WHILE A CONNECTION IS IN PROGRESS
-   SHIFT + ARROW changes target layer; source remains captured.
-   ========================================================= */
-document.addEventListener('keydown',e=>{
- if(!ui.connection||!e.shiftKey)return;
- if(e.key==='ArrowRight'){e.preventDefault();switchLayer(1);ui.connection.cursor=ui.connection.cursor||point(window.innerWidth/2,window.innerHeight/2);drawLinks()}
- if(e.key==='ArrowLeft'){e.preventDefault();switchLayer(-1);ui.connection.cursor=ui.connection.cursor||point(window.innerWidth/2,window.innerHeight/2);drawLinks()}
-});
-$('workspace').addEventListener('pointerdown',e=>{
- if(e.target===workspace||e.target===planes){ui.selectedNodeId=null;document.querySelectorAll('.node.selected').forEach(n=>n.classList.remove('selected'))}
-});
-
-/* =========================================================
-   CUSTOM CONFIRMATION — no browser-native alert/confirm.
-   ========================================================= */
-function confirmDialog(title,message){
- $('modalTitle').textContent=title;$('modalText').textContent=message;
- $('modalShade').style.display='grid';
- return new Promise(resolve=>{ui.modalResolve=resolve});
-}
-function closeDialog(value){
- $('modalShade').style.display='none';
- if(ui.modalResolve){ui.modalResolve(value);ui.modalResolve=null}
-}
-$('modalCancel').onclick=()=>closeDialog(false);
-$('modalConfirm').onclick=()=>closeDialog(true);
-$('modalShade').addEventListener('pointerdown',e=>{if(e.target===$('modalShade'))closeDialog(false)});
-
-/* =========================================================
-   EFFECT MENU
-   ========================================================= */
-effectMenu.addEventListener('click',e=>{
- const button=e.target.closest('button[data-effect]');if(!button||!ui.menuLinkId)return;
- setEffect(ui.menuLinkId,button.dataset.effect);
-});
-document.addEventListener('pointerdown',e=>{
- if(!effectMenu.contains(e.target)&&!e.target.closest('.wire-mid')&&!e.target.closest('.wire-effect'))effectMenu.style.display='none';
-});
-
-/* =========================================================
-   INITIALIZATION
-   ========================================================= */
+document.querySelectorAll('.module').forEach(m=>m.addEventListener('pointerdown',e=>{e.preventDefault();gesture.shelf={kind:m.dataset.kind,effect:m.dataset.effect};ghost.textContent=m.dataset.kind==='page'?'▱  Új oldal':m.dataset.kind==='layer'?'▤  Új réteg':`✧  ${EFFECT[m.dataset.effect]}`;ghost.style.display='block';ghost.style.left=e.clientX+12+'px';ghost.style.top=e.clientY+12+'px'}));
+document.addEventListener('pointermove',e=>{if(gesture.shelf){ghost.style.left=e.clientX+12+'px';ghost.style.top=e.clientY+12+'px';return}if(gesture.node){let n=node(gesture.node.id),o=offset(nodeLayer(n.id)),p=localPoint(e.clientX,e.clientY);n.x=Math.max(0,p.x-gesture.node.dx-o.x);n.y=Math.max(60,p.y-gesture.node.dy-o.y);let el=ws.querySelector(`[data-node="${n.id}"]`);if(el){el.style.left=n.x+'px';el.style.top=n.y+'px'}drawLinks();return}if(gesture.connection){gesture.connection.cursor=localPoint(e.clientX,e.clientY);drawLinks()}});
+document.addEventListener('pointerup',e=>{if(gesture.shelf){let g=gesture.shelf;gesture.shelf=null;ghost.style.display='none';let r=ws.getBoundingClientRect(),inside=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;if(inside){let p=localPoint(e.clientX,e.clientY);if(g.kind==='page')addPage(p.x,p.y);else if(g.kind==='layer')addLayer();else{let hit=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-link]');if(hit)addEffect(hit.dataset.link,g.effect);else say('Az effektet a Path középpontjára húzd')}}return}
+ if(gesture.node){let g=gesture.node;gesture.node=null;let n=node(g.id);if(n&&(n.x!==g.sx||n.y!==g.sy))commit();drawLinks();return}if(gesture.connection)finishPort(e)});
+function finishPort(e){let g=gesture.connection;gesture.connection=null;let el=document.elementFromPoint(e.clientX,e.clientY)?.closest('.port');if(!el){drawLinks();return}let t={id:el.dataset.id,side:el.dataset.side,index:+el.dataset.index};if(g.mode==='new'){connect(g.source,t);return}let l=link(g.linkId),expected=g.end==='out'?'out':'in';if(!l||t.side!==expected){say('Nem megfelelő célport');drawLinks();return}let other=g.end==='out'?l.to:l.from;if(t.id===other||pairExists(t.id,other,l.id)||used(t.id,t.side,t.index)){say('A kapcsolat célja nem használható');drawLinks();return}if(g.end==='out'){l.from=t.id;l.fp=t.index}else{l.to=t.id;l.tp=t.index}normalize();render();commit();say('Kapcsolat áthelyezve')}
+document.addEventListener('keydown',e=>{if(gesture.connection&&e.shiftKey){if(e.key==='ArrowRight'){e.preventDefault();switchLayer(1);gesture.connection.cursor ||= {x:ws.clientWidth/2,y:ws.clientHeight/2};drawLinks()}if(e.key==='ArrowLeft'){e.preventDefault();switchLayer(-1);gesture.connection.cursor ||= {x:ws.clientWidth/2,y:ws.clientHeight/2};drawLinks()}}});
+window.addEventListener('pointercancel',()=>{cancelGestures();drawLinks()});window.addEventListener('blur',()=>{cancelGestures();drawLinks()});window.addEventListener('resize',drawLinks);
+ws.addEventListener('pointerdown',e=>{if(e.target===ws||e.target===planes)document.querySelectorAll('.node.selected').forEach(n=>n.classList.remove('selected'))});
 commit();render();
 })();
-</script>
-</body>
-</html>
+</script></body></html>
