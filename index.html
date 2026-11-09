@@ -1,236 +1,697 @@
 <!doctype html>
 <html lang="hu">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NewWorld Designer 0.7</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEWWORLD DESIGNER · 01</title>
 <style>
-:root{color-scheme:dark;--bg:#101722;--panel:#182332;--line:#34475d;--text:#e8eef7;--muted:#91a4bb;--blue:#75b8ff;--gold:#f3c66c;--violet:#b79be8}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font:14px/1.4 Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+:root{
+  color-scheme:dark;
+  --bg:#101722;--panel:#182332;--panel2:#202e3e;--line:#34475d;
+  --text:#e8eef7;--muted:#91a4bb;--blue:#75b8ff;--gold:#f3c66c;
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font:14px/1.4 Inter,"Segoe UI",Arial,sans-serif}
 .app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 258px;grid-template-rows:54px minmax(0,1fr)}
-header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 16px;background:#151f2c;border-bottom:1px solid #2b3b4e;z-index:30}
-.brand{font-weight:750;letter-spacing:.04em}.version{color:var(--muted);font-size:12px}.actions{display:flex;gap:7px;margin-left:12px}
-button{font:inherit}.tool{border:1px solid #40546c;background:#202e3e;color:#d9e7f6;border-radius:7px;padding:7px 11px;font-size:12px;cursor:pointer}.tool:hover:not(:disabled){border-color:var(--blue);background:#263b51}.tool:disabled{opacity:.35;cursor:default}
-.hint{margin-left:auto;color:var(--muted);font-size:11px}
-.workspace{position:relative;overflow:hidden;background-color:#0e1621;background-image:radial-gradient(#30445b 1px,transparent 1px);background-size:24px 24px;perspective:1100px;perspective-origin:50% 48%;touch-action:none}
-.world{position:absolute;inset:0;transform-style:preserve-3d}
-.plane{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:50% 48%;transition:transform .25s ease,opacity .25s ease;pointer-events:none}
-.plane.active{pointer-events:auto;opacity:1!important;z-index:10}
-.plane-surface{position:absolute;inset:28px 26px 25px;border:1px solid #49627b;border-radius:14px;background:linear-gradient(135deg,#1b2c3d20,#101a2820);box-shadow:inset 0 0 55px #0002;pointer-events:none}
-.plane.active .plane-surface{border-color:#587a9b}
-.plane-label{display:none;position:absolute;left:42px;top:36px;padding:5px 9px;border:1px solid #49627b;border-radius:6px;background:#182838e8;color:#b7cbe0;font-size:10px;letter-spacing:.1em;font-weight:800;pointer-events:none}
-.plane.active .plane-label{border-color:var(--blue);color:#e3f1ff;background:#1c3045ee}
-.node{position:absolute;width:218px;min-height:112px;border:1px solid #6683a2;border-radius:10px;background:#1b2938;box-shadow:0 8px 24px #0005;user-select:none}
+.header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 16px;background:#151f2c;border-bottom:1px solid #2b3b4e;z-index:10}
+.brand{font-weight:800;letter-spacing:.045em}.version{font-size:12px;color:var(--muted)}
+.header-actions{display:flex;gap:7px;margin-left:14px}
+.tool{border:1px solid #40546c;background:#202e3e;color:#d9e7f6;border-radius:7px;padding:7px 11px;font-size:12px;cursor:pointer}
+.tool:hover:not(:disabled){border-color:var(--blue);background:#263b51}
+.tool:disabled{opacity:.35;cursor:default}
+.header-hint{margin-left:auto;color:var(--muted);font-size:11px}
+.workspace{position:relative;overflow:hidden;touch-action:none;background-color:#0e1621;background-image:radial-gradient(#30445b 1px,transparent 1px);background-size:24px 24px}
+.workspace:focus{outline:none}
+.wires{position:absolute;inset:0;width:100%;height:100%;z-index:2;overflow:visible;pointer-events:none}
+.wire{fill:none;stroke:#83baff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;opacity:.94}
+.wire.preview{stroke:var(--gold);stroke-dasharray:6 5}
+.wire-mid{fill:var(--gold);stroke:#0e1621;stroke-width:2;pointer-events:all;cursor:default}
+.node{position:absolute;z-index:3;width:218px;min-height:112px;border:1px solid #6683a2;border-radius:10px;background:#1b2938;box-shadow:0 8px 24px #0005;user-select:none}
 .node.selected{outline:2px solid var(--blue);outline-offset:2px}
 .node-head{height:39px;padding:0 9px 0 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid #354b61;border-radius:9px 9px 0 0;background:#23364a;cursor:grab;touch-action:none}
-.node-head:active{cursor:grabbing}.node-type{font-size:9px;letter-spacing:.1em;color:#a9c9e8;font-weight:800}.node-title{font-size:13px;font-weight:700;flex:1}
-.del{width:22px;height:22px;border:0;border-radius:5px;background:transparent;color:#9fb2c8;font-size:17px;cursor:pointer}.del:hover{background:#573b45;color:#fff}
-.node-body{padding:13px 14px 12px;display:flex;justify-content:space-between;color:#c8d5e4;font-size:12px}.node-sub{padding:0 14px 12px;color:#8198b1;font-size:10px}
-.port{position:absolute;width:15px;height:15px;border-radius:50%;background:#152331;border:2px solid var(--gold);box-shadow:0 0 0 2px #0e1621;z-index:4;transform:translateY(-50%);cursor:crosshair}
-.port.in{left:-8px}.port.out{right:-8px;border-color:var(--blue)}.port:hover{filter:brightness(1.35);transform:translateY(-50%) scale(1.12)}
-.wires{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:20}
-.wire{fill:none;stroke:#83baff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;opacity:.92}
-.wire.cross{stroke:#c3a8ff;stroke-width:2.5;stroke-dasharray:7 4}
-.wire.temp{stroke:var(--gold);stroke-dasharray:6 5}
-.mid{fill:var(--gold);stroke:#0e1621;stroke-width:2;pointer-events:all;cursor:copy}
-.endpoint{fill:#172637;stroke:#b7d9ff;stroke-width:2;pointer-events:all;cursor:grab}
-.empty{position:absolute;inset:0;display:grid;place-items:center;color:#71859c;text-align:center;pointer-events:none;z-index:1}.empty strong{display:block;color:#a9bbcf;font-size:16px;margin-bottom:7px}.empty span{font-size:12px}
-.shelf{background:#172230;border-left:1px solid #2b3b4e;padding:15px 14px;overflow:auto;z-index:30}.shelf h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#a9bbcf;margin:2px 0 12px}
-.module{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #40546c;border-radius:9px;background:#202e3e;cursor:grab;user-select:none;touch-action:none;margin-bottom:8px}.module:active{cursor:grabbing}
-.ico{width:29px;height:29px;border-radius:7px;background:#29425a;display:grid;place-items:center;color:#a9d4ff;font-weight:800;font-size:16px;flex:none}
+.node-head:active{cursor:grabbing}
+.node-type{font-size:9px;letter-spacing:.1em;color:#a9c9e8;font-weight:800}
+.node-title{font-size:13px;font-weight:700;flex:1}
+.node-id{font-size:10px;color:#8da6bf}
+.node-delete{width:22px;height:22px;border:0;border-radius:5px;background:transparent;color:#9fb2c8;font-size:17px;line-height:1;cursor:pointer}
+.node-delete:hover{background:#573b45;color:#fff}
+.node-body{padding:13px 14px 12px;display:flex;align-items:center;justify-content:space-between;color:#c8d5e4;font-size:12px}
+.node-sub{padding:0 14px 12px;color:#8198b1;font-size:10px}
+.port{position:absolute;width:15px;height:15px;border-radius:50%;background:#152331;border:2px solid var(--gold);box-shadow:0 0 0 2px #0e1621;z-index:5;transform:translateY(-50%);cursor:crosshair}
+.port.in{left:-8px}.port.out{right:-8px;border-color:var(--blue)}
+.port:hover{filter:brightness(1.35);transform:translateY(-50%) scale(1.12)}
+.shelf{background:#172230;border-left:1px solid #2b3b4e;padding:15px 14px;overflow:auto;z-index:10}
+.shelf h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#a9bbcf;margin:2px 0 12px}
+.module{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #40546c;border-radius:9px;background:#202e3e;cursor:grab;user-select:none;touch-action:none;margin-bottom:8px}
+.module:active{cursor:grabbing}
+.module-icon{width:29px;height:29px;border-radius:7px;background:#29425a;display:grid;place-items:center;color:#a9d4ff;font-weight:800;font-size:16px;flex:none}
 .module strong{display:block;font-size:12px}.module small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
-.effect{border-color:#594d75;background:#29263a}.effect .ico{background:#453b60;color:#d6c5ff}
-.note{margin:12px 0 18px;color:#8397ad;font-size:10px;line-height:1.55}.sep{height:1px;background:#34475d;margin:16px 0}
-.ghost{position:fixed;z-index:1000;pointer-events:none;padding:11px 14px;border:1px solid var(--blue);border-radius:9px;background:#23364a;box-shadow:0 12px 32px #0008;opacity:.96;font-weight:700;color:#e8eef7;min-width:155px}
-.ghost.effect{border-color:var(--violet);background:#302a43}
-.layerbar{position:absolute;top:15px;left:16px;z-index:25;display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid #3c526a;border-radius:9px;background:#172637ed}
-.layerbar button{width:26px;height:24px;border:1px solid #40546c;border-radius:5px;background:#202e3e;color:#d9e7f6;cursor:pointer}.layerbar button:disabled{opacity:.3;cursor:default}
-.layer-name{font-size:11px;color:#e1eefb;font-weight:750;min-width:78px;text-align:center}
-.layer-count{font-size:10px;color:#8298b1;margin-left:5px}
-.depth-label{position:absolute;right:18px;top:19px;z-index:25;color:#8298b1;font-size:10px;pointer-events:none;text-align:right}
-.layer-list{position:absolute;left:16px;top:58px;z-index:25;display:flex;gap:5px;max-width:calc(100% - 32px);overflow-x:auto;padding:3px 2px 7px}
-.layer-chip{border:1px solid #40546c;border-radius:6px;padding:5px 8px;background:#172637e8;color:#91a4bb;font-size:10px;white-space:nowrap;cursor:pointer}
-.layer-chip.active{border-color:var(--blue);background:#233b52;color:#e6f3ff}.layer-list{background:#142131e8;border:1px solid #34475d;border-radius:8px;padding:5px 6px;max-width:calc(100% - 32px);min-height:30px}.layerbar{backdrop-filter:blur(8px)}
-.toast{position:absolute;left:18px;bottom:16px;padding:8px 11px;background:#1c2b3b;border:1px solid #3b526c;border-radius:7px;color:#a9bbcf;font-size:11px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:40}.toast.show{opacity:1}
-@media(max-width:760px){.app{grid-template-columns:minmax(0,1fr) 205px}.hint{display:none}.shelf{padding:12px 9px}.plane-surface{inset:68px 9px 15px}.plane-label{top:76px;left:20px}}
-</style></head>
+.shelf-note{margin:12px 0;color:#8397ad;font-size:10px;line-height:1.55}
+.ghost{position:fixed;z-index:1000;pointer-events:none;padding:11px 14px;border:1px solid var(--blue);border-radius:9px;background:#23364a;box-shadow:0 12px 32px #0008;opacity:.96;font-weight:700;color:#e8eef7;min-width:150px}
+.empty{position:absolute;inset:0;display:grid;place-items:center;color:#71859c;text-align:center;pointer-events:none;z-index:1}
+.empty strong{display:block;color:#a9bbcf;font-size:16px;margin-bottom:7px}.empty span{font-size:12px}
+.toast{position:absolute;left:18px;bottom:16px;padding:8px 11px;background:#1c2b3b;border:1px solid #3b526c;border-radius:7px;color:#a9bbcf;font-size:11px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:20}
+.toast.show{opacity:1}
+@media(max-width:760px){.app{grid-template-columns:minmax(0,1fr) 205px}.header-hint{display:none}.shelf{padding:12px 9px}}
+</style>
+</head>
 <body>
 <div class="app">
-<header><div class="brand">NEWWORLD DESIGNER</div><div class="version">0.7 · layer foundation</div><div class="actions"><button class="tool" id="undo" disabled>↶ Undo</button><button class="tool" id="redo" disabled>↷ Redo</button></div><div class="hint">Kapcsolat húzása közben: SHIFT + ↑ / ↓ rétegváltás</div></header>
-<main class="workspace" id="ws">
- <div class="world" id="world"></div><svg class="wires" id="wires"></svg>
- <div class="layerbar"><button id="prev" title="Előző réteg">‹</button><span class="layer-name" id="activeName">RÉTEG 1</span><button id="next" title="Következő réteg">›</button><span class="layer-count" id="count">1 / 1</span><button id="deleteLayer" title="Aktív réteg törlése">×</button></div>
- <div class="layer-list" id="layerList"></div>
- <div class="depth-label">AKTÍV RÉTEG ELÖL · TÖBBI RÉTEG HÁTRÉBB</div>
- <div class="empty" id="empty"><div><strong>Üres munkaterület</strong><span>Húzd be jobbról az „Oldal” modult a kezdéshez.</span></div></div>
- <div class="toast" id="toast"></div>
-</main>
-<aside class="shelf">
- <h2>Világ modulok</h2>
- <div class="module" data-kind="page"><div class="ico">▱</div><div><strong>Oldal</strong><small>Üres, alakítható oldal</small></div></div>
- <div class="module" data-kind="layer"><div class="ico">▤</div><div><strong>Új réteg</strong><small>Az aktív réteg mögé</small></div></div>
- <div class="note">Az új réteg az aktív réteg mögé kerül, majd azonnal aktívvá válik. A rétegek neve és sorrendje felül is látható.</div>
- <div class="sep"></div>
- <h2>Effekt modulok · Flip</h2>
- <div class="module effect" data-kind="effect" data-effect="left"><div class="ico">↶</div><div><strong>Flip · Balra</strong><small>Balra forduló lapátmenet</small></div></div>
- <div class="module effect" data-kind="effect" data-effect="right"><div class="ico">↷</div><div><strong>Flip · Jobbra</strong><small>Jobbra forduló lapátmenet</small></div></div>
- <div class="module effect" data-kind="effect" data-effect="up"><div class="ico">↑</div><div><strong>Flip · Felfelé</strong><small>Felfelé forduló lapátmenet</small></div></div>
- <div class="module effect" data-kind="effect" data-effect="down"><div class="ico">↓</div><div><strong>Flip · Lefelé</strong><small>Lefelé forduló lapátmenet</small></div></div>
- <div class="module effect" data-kind="effect" data-effect="depthIn"><div class="ico">⊕</div><div><strong>Flip · Mélységbe</strong><small>Belépés a következő rétegbe</small></div></div>
- <div class="module effect" data-kind="effect" data-effect="depthOut"><div class="ico">⊖</div><div><strong>Flip · Mélységből</strong><small>Visszatérés az előző rétegből</small></div></div>
- <div class="note">Húzd az effektet egy kapcsolat középponti körére. Az effekt a kapcsolathoz tartozik.</div>
-</aside>
-</div>
-<script>
-(()=>{
-'use strict';
-const ws=document.getElementById('ws'),world=document.getElementById('world'),svg=document.getElementById('wires');
-const toastEl=document.getElementById('toast'),empty=document.getElementById('empty');
-const undoBtn=document.getElementById('undo'),redoBtn=document.getElementById('redo');
-const NS='http://www.w3.org/2000/svg',W=218,H=112,GAP=24;
-const EFFECTS={left:'Flip · Balra',right:'Flip · Jobbra',up:'Flip · Felfelé',down:'Flip · Lefelé',depthIn:'Flip · Mélységbe',depthOut:'Flip · Mélységből'};
-let state={layers:[{id:'L1',name:'Réteg 1',nodes:[]}],links:[],activeLayerId:'L1',nextLayer:2,nextPage:1};
-let ui={drag:null,connect:null,shelf:null,reroute:null};
-let history=[],historyAt=-1,restoring=false,toastTimer=null;
-const activeIndex=()=>state.layers.findIndex(l=>l.id===state.activeLayerId);
-const activeLayer=()=>state.layers[activeIndex()];
-const layer=id=>state.layers.find(l=>l.id===id);
-const node=(lid,nid)=>layer(lid)?.nodes.find(n=>n.id===nid);
-function notify(s){toastEl.textContent=s;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1800)}
-function cleanState(){return {layers:state.layers.map(l=>({id:l.id,name:l.name,nodes:l.nodes.map(n=>({id:n.id,name:n.name,x:n.x,y:n.y}))})),links:state.links.map(l=>({...l})),activeLayerId:state.activeLayerId,nextLayer:state.nextLayer,nextPage:state.nextPage}}
-function record(){if(restoring)return;history=history.slice(0,historyAt+1);history.push(JSON.stringify(cleanState()));if(history.length>100)history.shift();historyAt=history.length-1;historyButtons()}
-function historyButtons(){undoBtn.disabled=historyAt<=0;redoBtn.disabled=historyAt>=history.length-1}
-function loadSnapshot(raw){restoring=true;state=JSON.parse(raw);ui={drag:null,connect:null,shelf:null,reroute:null};render();restoring=false;historyButtons()}
-function undo(){if(historyAt>0){historyAt--;loadSnapshot(history[historyAt]);notify('Visszavonva')}}
-function redo(){if(historyAt<history.length-1){historyAt++;loadSnapshot(history[historyAt]);notify('Újra végrehajtva')}}
-undoBtn.addEventListener('click',undo);redoBtn.addEventListener('click',redo);
-document.addEventListener('keydown',e=>{
- if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();return}
- if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();return}
- if(ui.connect&&(e.shiftKey)&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const i=activeIndex(),ni=e.key==='ArrowDown'?Math.min(state.layers.length-1,i+1):Math.max(0,i-1);if(ni!==i){state.activeLayerId=state.layers[ni].id;applyLayerView();draw();notify('Célréteg: '+state.layers[ni].name)}}
-});
-function coords(clientX,clientY,el){const r=el.getBoundingClientRect();return{x:clientX-r.left,y:clientY-r.top}}
-function portUse(nid,side,lid=null){return state.links.filter(l=>(side==='out'?l.fromNode===nid:l.toNode===nid)&&(!lid||(side==='out'?l.fromLayer:l.toLayer)===lid)).map(l=>side==='out'?l.fromPort:l.toPort)}
-function portCount(nid,side,lid=null){return portUse(nid,side,lid).length+1}
-function normalizePorts(){
- const seen=new Set();
- state.layers.forEach(layerData=>layerData.nodes.forEach(n=>{
-  ['out','in'].forEach(side=>{
-   const refs=state.links.filter(l=>side==='out'?(l.fromLayer===layerData.id&&l.fromNode===n.id):(l.toLayer===layerData.id&&l.toNode===n.id));
-   refs.sort((a,b)=>(side==='out'?a.fromPort-b.fromPort:a.toPort-b.toPort));
-   refs.forEach((l,i)=>{if(side==='out')l.fromPort=i;else l.toPort=i});
-  });
- }));
-}
-function height(n,lid){return Math.max(H,76+Math.max(portCount(n.id,'in',lid),portCount(n.id,'out',lid))*GAP)}
-function createPlane(l){const p=document.createElement('div');p.className='plane';p.dataset.layerId=l.id;p.innerHTML='<div class="plane-surface"></div><div class="plane-label"></div>';world.appendChild(p);l.el=p;l.label=p.querySelector('.plane-label')}
-function drawNode(l,n){
- const el=document.createElement('section');el.className='node';el.dataset.nodeId=n.id;
- el.innerHTML='<div class="node-head"><span class="node-type">OLDAL</span><span class="node-title"></span><button class="del" title="Oldal törlése">×</button></div><div class="node-body"><span>▤ &nbsp;Tartalmi oldal</span><span class="node-id"></span></div><div class="node-sub">Tartalom még nincs hozzárendelve</div>';
- el.querySelector('.node-title').textContent=n.name;el.querySelector('.node-id').textContent=n.id;el.style.left=n.x+'px';el.style.top=n.y+'px';l.el.appendChild(el);n.el=el;drawPorts(l,n);
- el.addEventListener('pointerdown',e=>{if(e.target.closest('.del')||e.target.classList.contains('port'))return;if(e.target.closest('.node-head')){e.preventDefault();document.querySelectorAll('.node').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');const p=coords(e.clientX,e.clientY,l.el);ui.drag={lid:l.id,nid:n.id,dx:p.x-n.x,dy:p.y-n.y,orig:{x:n.x,y:n.y}}}});
- el.querySelector('.del').addEventListener('pointerdown',e=>e.stopPropagation());
- el.querySelector('.del').addEventListener('click',e=>{e.stopPropagation();deletePage(l.id,n.id)});
-}
-function drawPorts(l,n){if(!n.el)return;n.el.querySelectorAll('.port').forEach(p=>p.remove());const h=height(n,l.id);n.el.style.height=h+'px';['in','out'].forEach(side=>{for(let i=0;i<portCount(n.id,side,l.id);i++){const p=document.createElement('div');p.className='port '+side;p.dataset.side=side;p.dataset.port=String(i);p.title=(side==='in'?'Bemenet ':'Kimenet ')+(i+1);p.style.top=(h/2+(i-(portCount(n.id,side,l.id)-1)/2)*GAP)+'px';p.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();ui.connect={lid:l.id,nid:n.id,side,port:i};draw()});n.el.appendChild(p)}})}
-function refreshPorts(){state.layers.forEach(l=>l.nodes.forEach(n=>drawPorts(l,n)))}
-function addPage(x,y){const l=activeLayer(),id='P'+state.nextPage++,n={id,name:'Oldal '+(state.nextPage-1),x:Math.max(10,x-W/2),y:Math.max(100,y-36)};l.nodes.push(n);drawNode(l,n);updateEmpty();draw();record();notify('Oldal hozzáadva · '+l.name)}
-function addLayer(){
- const i=activeIndex(),id='L'+state.nextLayer++,name='Réteg '+(state.nextLayer-1);
- const fresh={id,name,nodes:[]};
- // Insert directly behind the current active layer; then activate the new layer.
- state.layers.splice(i+1,0,fresh);state.activeLayerId=id;
- render();record();notify(name+' létrehozva az aktív réteg mögött');
-}
-function deletePage(lid,nid){const l=layer(lid);if(!l)return;l.nodes=l.nodes.filter(n=>n.id!==nid);state.links=state.links.filter(x=>!(x.fromLayer===lid&&x.fromNode===nid)&&!(x.toLayer===lid&&x.toNode===nid));normalizePorts();render();record();notify('Oldal és kapcsolatai törölve')}
-function deleteLayer(lid){if(state.layers.length<=1){notify('Az utolsó réteg nem törölhető');return}const idx=state.layers.findIndex(l=>l.id===lid);if(idx<0)return;const [removed]=state.layers.splice(idx,1);state.links=state.links.filter(x=>x.fromLayer!==lid&&x.toLayer!==lid);normalizePorts();if(state.activeLayerId===lid)state.activeLayerId=state.layers[Math.max(0,idx-1)].id;render();record();notify(removed.name+' és kapcsolatai törölve')}
-function updateEmpty(){empty.style.display=state.layers.every(l=>l.nodes.length===0)?'grid':'none'}
-function applyLayerView(){
- const ai=activeIndex();
- state.layers.forEach((l,i)=>{const d=Math.abs(i-ai),behind=i<ai;const z=-d*190;const x=behind?-d*7:d*7;const y=d*9;l.el.classList.toggle('active',i===ai);l.el.style.transform=`translate3d(${x}px,${y}px,${z}px) scale(${1-d*.045})`;l.el.style.opacity=i===ai?'1':String(Math.max(.12,.30-d*.035));l.label.textContent=l.name.toUpperCase()+(i===ai?' · AKTÍV':'');l.renderOpacity=i===ai?1:Math.max(.12,.30-d*.035)});
- document.getElementById('activeName').textContent=activeLayer().name.toUpperCase();
- document.getElementById('count').textContent=(ai+1)+' / '+state.layers.length;
- document.getElementById('prev').disabled=ai<=0;document.getElementById('next').disabled=ai>=state.layers.length-1;
- const list=document.getElementById('layerList');list.innerHTML='';
- state.layers.forEach((l,i)=>{const b=document.createElement('button');b.className='layer-chip'+(l.id===state.activeLayerId?' active':'');b.textContent=(i+1)+'. '+l.name+' · '+l.nodes.length+' oldal';b.title='Váltás: '+l.name;b.addEventListener('click',()=>{state.activeLayerId=l.id;applyLayerView();draw()});b.addEventListener('contextmenu',e=>{e.preventDefault();if(confirm(l.name+' törlése? A benne lévő oldalak és kapcsolatok is törlődnek.'))deleteLayer(l.id)});list.appendChild(b)});
-}
-function render(){world.innerHTML='';state.layers.forEach(l=>{createPlane(l);l.nodes.forEach(n=>drawNode(l,n))});applyLayerView();updateEmpty();draw()}
-function portScreen(lid,nid,side,index){const n=node(lid,nid),p=n?.el?.querySelector(`.port.${side}[data-port="${index}"]`);if(!p)return{x:0,y:0};const a=p.getBoundingClientRect(),w=ws.getBoundingClientRect();return{x:a.left+a.width/2-w.left,y:a.top+a.height/2-w.top}}
+  <header class="header">
+    <div class="brand">NEWWORLD DESIGNER</div>
+    <div class="version">01 · clean foundation</div>
+    <div class="header-actions">
+      <button class="tool" id="undoButton" disabled title="Visszavonás · Ctrl+Z">↶ Undo</button>
+      <button class="tool" id="redoButton" disabled title="Újra · Ctrl+Shift+Z">↷ Redo</button>
+    </div>
+    <div class="header-hint">Oldalak · kapcsolatok · objektumkerülő Path</div>
+  </header>
 
-function curve(a,b,cross=false){if(cross){const dx=b.x-a.x,dy=b.y-a.y,arc=Math.max(50,Math.min(145,Math.abs(dx)*.18+Math.abs(dy)*.12));return `M${a.x},${a.y} C${a.x+dx*.25},${a.y-arc} ${a.x+dx*.75},${b.y-arc} ${b.x},${b.y}`}const dx=Math.max(40,Math.abs(b.x-a.x)*.42);return `M${a.x},${a.y} C${a.x+dx},${a.y} ${b.x-dx},${b.y} ${b.x},${b.y}`}
-function nodeRectsForLayer(lid,excludeIds=[]){
- const w=ws.getBoundingClientRect(),L=layer(lid);if(!L)return [];
- return L.nodes.filter(n=>!excludeIds.includes(n.id)&&n.el).map(n=>{const r=n.el.getBoundingClientRect();return{x:r.left-w.left-16,y:r.top-w.top-16,right:r.right-w.left+16,bottom:r.bottom-w.top+16}});
-}
-function obstacleRoute(a,b,lid,sourceId,targetId){
- const step=14,lead=24,start={x:a.x+lead,y:a.y},finish={x:b.x-lead,y:b.y},w=ws.clientWidth,h=ws.clientHeight;
- const obs=nodeRectsForLayer(lid,[sourceId,targetId]);
- const blocked=(x,y)=>obs.some(o=>x>=o.x&&x<=o.right&&y>=o.y&&y<=o.bottom);
- const key=(x,y)=>x+','+y, snap=v=>Math.round(v/step)*step;
- const sx=snap(start.x),sy=snap(start.y),tx=snap(finish.x),ty=snap(finish.y);
- const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
- const open=[{x:sx,y:sy,g:0,f:Math.abs(tx-sx)+Math.abs(ty-sy),dir:-1,path:[]}],best=new Map(),max=12000;let found=null,loops=0;
- while(open.length&&loops++<max){
-  open.sort((a,b)=>a.f-b.f);const cur=open.shift(),k=key(cur.x,cur.y)+'|'+cur.dir;if(best.has(k)&&best.get(k)<=cur.g)continue;best.set(k,cur.g);
-  if(Math.abs(cur.x-tx)<=step&&Math.abs(cur.y-ty)<=step){found=cur;break}
-  for(let di=0;di<4;di++){const nx=cur.x+dirs[di][0]*step,ny=cur.y+dirs[di][1]*step;if(nx<8||ny<8||nx>w-8||ny>h-8||blocked(nx,ny))continue;
-   const turn=cur.dir!==-1&&cur.dir!==di?11:0,g=cur.g+step+turn,nk=key(nx,ny)+'|'+di;if(best.has(nk)&&best.get(nk)<=g)continue;
-   open.push({x:nx,y:ny,g,f:g+Math.abs(tx-nx)+Math.abs(ty-ny),dir:di,path:cur.path.concat([[nx,ny]])});
+  <main class="workspace" id="workspace" tabindex="0">
+    <svg class="wires" id="wires" aria-hidden="true"></svg>
+    <div class="empty" id="emptyMessage">
+      <div><strong>Üres munkaterület</strong><span>Húzd be jobbról az „Oldal” modult a kezdéshez.</span></div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </main>
+
+  <aside class="shelf">
+    <h2>Modultár</h2>
+    <div class="module" data-module="page">
+      <div class="module-icon">▱</div>
+      <div><strong>Oldal</strong><small>Üres, alakítható oldalnode</small></div>
+    </div>
+    <div class="shelf-note">Húzd az Oldal modult a munkaterületre. Az oldalnode-ok szabadon mozgathatók és összeköthetők.</div>
+  </aside>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ============================================================
+  // 01. DOMAIN STATE — only data, no DOM references.
+  // ============================================================
+  const initialState = () => ({
+    nodes: [],
+    links: [],
+    nextNodeNumber: 1,
+    nextLinkNumber: 1
+  });
+
+  let state = initialState();
+
+  // ============================================================
+  // 02. UI STATE — temporary gestures never enter undo history.
+  // ============================================================
+  const ui = {
+    shelfDrag: null,
+    nodeDrag: null,
+    connection: null
+  };
+
+  const workspace = document.getElementById('workspace');
+  const wires = document.getElementById('wires');
+  const emptyMessage = document.getElementById('emptyMessage');
+  const toastElement = document.getElementById('toast');
+  const undoButton = document.getElementById('undoButton');
+  const redoButton = document.getElementById('redoButton');
+
+  const NODE_WIDTH = 218;
+  const NODE_MIN_HEIGHT = 112;
+  const PORT_SPACING = 24;
+  const GRID = 12;
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  let toastTimer = null;
+  let history = [];
+  let historyIndex = -1;
+
+  // ============================================================
+  // 03. HISTORY — one completed user action = one history entry.
+  // ============================================================
+  function serializableState() {
+    return {
+      nodes: state.nodes.map(({id, number, x, y, title}) => ({id, number, x, y, title})),
+      links: state.links.map(link => ({...link})),
+      nextNodeNumber: state.nextNodeNumber,
+      nextLinkNumber: state.nextLinkNumber
+    };
   }
- }
- if(!found)return curve(a,b,false);
- let pts=[[start.x,start.y],...found.path,[finish.x,finish.y]];
- // Remove duplicate and collinear grid points.
- pts=pts.filter((p,i)=>i===0||p[0]!==pts[i-1][0]||p[1]!==pts[i-1][1]);
- const simple=[];for(const p of pts){simple.push(p);while(simple.length>=3){const A=simple[simple.length-3],B=simple[simple.length-2],C=simple[simple.length-1];if((A[0]===B[0]&&B[0]===C[0])||(A[1]===B[1]&&B[1]===C[1]))simple.splice(simple.length-2,1);else break}}
- let d=`M${a.x},${a.y} L${start.x},${start.y}`;
- for(let i=1;i<simple.length-1;i++){const A=simple[i-1],B=simple[i],C=simple[i+1],r=10;const v1={x:B[0]-A[0],y:B[1]-A[1]},v2={x:C[0]-B[0],y:C[1]-B[1]},len1=Math.hypot(v1.x,v1.y),len2=Math.hypot(v2.x,v2.y),rr=Math.min(r,len1/2,len2/2),p1={x:B[0]-v1.x/len1*rr,y:B[1]-v1.y/len1*rr},p2={x:B[0]+v2.x/len2*rr,y:B[1]+v2.y/len2*rr};d+=` L${p1.x},${p1.y} Q${B[0]},${B[1]} ${p2.x},${p2.y}`}
- const last=simple[simple.length-1];d+=` L${last[0]},${last[1]} L${b.x},${b.y}`;return d;
-}
-function linkOpacity(l){
- const a=layer(l.fromLayer),b=layer(l.toLayer);if(!a||!b)return 0;
- if(l.fromLayer===l.toLayer)return a.renderOpacity??1;
- return Math.min(a.renderOpacity??1,b.renderOpacity??1);
-}
-function draw(){
- const r=ws.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);svg.innerHTML='';
- state.links.forEach(l=>{
-  const a=portScreen(l.fromLayer,l.fromNode,'out',l.fromPort),b=portScreen(l.toLayer,l.toNode,'in',l.toPort),cross=l.fromLayer!==l.toLayer;
-  const d=cross?curve(a,b,true):obstacleRoute(a,b,l.fromLayer,l.fromNode,l.toNode);
-  const opacity=linkOpacity(l),p=document.createElementNS(NS,'path');p.setAttribute('d',d);p.setAttribute('class','wire'+(cross?' cross':''));p.setAttribute('opacity',opacity);svg.appendChild(p);
-  try{
-   const m=p.getPointAtLength(p.getTotalLength()/2),dot=document.createElementNS(NS,'circle');dot.setAttribute('cx',m.x);dot.setAttribute('cy',m.y);dot.setAttribute('r','6');dot.setAttribute('class','mid');dot.setAttribute('opacity',opacity);dot.dataset.link=l.id;dot.setAttribute('title',l.effect?EFFECTS[l.effect]:'Effekt befogadó pont');svg.appendChild(dot);
-   if(l.effect){const t=document.createElementNS(NS,'text');t.setAttribute('x',m.x);t.setAttribute('y',m.y-12);t.setAttribute('fill','#d6c5ff');t.setAttribute('font-size','10');t.setAttribute('text-anchor','middle');t.setAttribute('opacity',opacity);t.textContent=EFFECTS[l.effect];svg.appendChild(t)}
-   const da=document.createElementNS(NS,'circle');da.setAttribute('cx',a.x);da.setAttribute('cy',a.y);da.setAttribute('r','4');da.setAttribute('class','endpoint');da.setAttribute('opacity',opacity);da.dataset.rewire=l.id;da.dataset.end='from';svg.appendChild(da);
-   const db=document.createElementNS(NS,'circle');db.setAttribute('cx',b.x);db.setAttribute('cy',b.y);db.setAttribute('r','4');db.setAttribute('class','endpoint');db.setAttribute('opacity',opacity);db.dataset.rewire=l.id;db.dataset.end='to';svg.appendChild(db);
-  }catch(_){}
- });
- if(ui.connect&&ui.connect.cursor){const a=portScreen(ui.connect.lid,ui.connect.nid,ui.connect.side,ui.connect.port),b=ui.connect.cursor,p=document.createElementNS(NS,'path');p.setAttribute('d',ui.connect.side==='out'?curve(a,b,false):curve(b,a,false));p.setAttribute('class','wire temp');svg.appendChild(p)}
- if(ui.reroute&&ui.reroute.cursor){const l=state.links.find(x=>x.id===ui.reroute.id);if(l){const a=ui.reroute.end==='from'?ui.reroute.cursor:portScreen(l.fromLayer,l.fromNode,'out',l.fromPort),b=ui.reroute.end==='to'?ui.reroute.cursor:portScreen(l.toLayer,l.toNode,'in',l.toPort),p=document.createElementNS(NS,'path');p.setAttribute('d',curve(a,b,l.fromLayer!==l.toLayer));p.setAttribute('class','wire temp');svg.appendChild(p)}}
-}
-function startShelf(el,e){e.preventDefault();const kind=el.dataset.kind;ui.shelf={kind,effect:el.dataset.effect||null,pointerId:e.pointerId,ghost:document.createElement('div')};ui.shelf.ghost.className='ghost'+(kind==='effect'?' effect':'');ui.shelf.ghost.textContent=kind==='page'?'▱  Új oldal':kind==='layer'?'▤  Új réteg':EFFECTS[ui.shelf.effect];document.body.appendChild(ui.shelf.ghost);moveGhost(e.clientX,e.clientY)}
-function moveGhost(x,y){if(ui.shelf){ui.shelf.ghost.style.left=(x+12)+'px';ui.shelf.ghost.style.top=(y+12)+'px'}}
-document.querySelectorAll('.module').forEach(el=>el.addEventListener('pointerdown',e=>startShelf(el,e)));
-function finishShelf(e,cancel=false){if(!ui.shelf)return;const s=ui.shelf;ui.shelf=null;if(s.ghost?.isConnected)s.ghost.remove();if(cancel){notify('Húzás megszakítva');return}const r=ws.getBoundingClientRect(),inside=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;if(!inside)return;if(s.kind==='layer'){addLayer();return}if(s.kind==='page'){const p=coords(e.clientX,e.clientY,activeLayer().el);addPage(p.x,p.y);return}if(s.kind==='effect'){const el=document.elementFromPoint(e.clientX,e.clientY),dot=el?.closest('.mid');if(!dot){notify('Az effektet egy Path középponti körére húzd');return}const l=state.links.find(x=>x.id===dot.dataset.link);if(l){l.effect=s.effect;draw();record();notify(EFFECTS[s.effect]+' hozzárendelve')}}}
-document.addEventListener('pointermove',e=>{
- if(ui.shelf){moveGhost(e.clientX,e.clientY);return}
- if(ui.drag){const l=layer(ui.drag.lid),n=node(ui.drag.lid,ui.drag.nid);if(!l||!n)return;const p=coords(e.clientX,e.clientY,l.el);n.x=Math.max(0,p.x-ui.drag.dx);n.y=Math.max(90,p.y-ui.drag.dy);n.el.style.left=n.x+'px';n.el.style.top=n.y+'px';draw();return}
- if(ui.connect){ui.connect.cursor=coords(e.clientX,e.clientY,ws);draw();return}
- if(ui.reroute){ui.reroute.cursor=coords(e.clientX,e.clientY,ws);draw()}
-});
-document.addEventListener('pointerup',e=>{
- if(ui.shelf){finishShelf(e,false);return}
- if(ui.drag){const d=ui.drag,n=node(d.lid,d.nid);ui.drag=null;if(n&&(n.x!==d.orig.x||n.y!==d.orig.y))record();return}
- if(ui.connect){const c=ui.connect;ui.connect=null;const hit=document.elementFromPoint(e.clientX,e.clientY),p=hit?.closest('.port');if(!p){draw();return}const nEl=p.closest('.node'),plane=nEl?.closest('.plane'),lid=plane?.dataset.layerId,nid=nEl?.dataset.nodeId,side=p.dataset.side,port=Number(p.dataset.port);let link=null;if(c.side==='out'&&side==='in')link={fromLayer:c.lid,fromNode:c.nid,fromPort:c.port,toLayer:lid,toNode:nid,toPort:port,effect:null,id:'C'+(Date.now())};else if(c.side==='in'&&side==='out')link={fromLayer:lid,fromNode:nid,fromPort:port,toLayer:c.lid,toNode:c.nid,toPort:c.port,effect:null,id:'C'+(Date.now())};if(link&&!(link.fromLayer===link.toLayer&&link.fromNode===link.toNode)){state.links.push(link);normalizePorts();refreshPorts();draw();record();notify(link.fromLayer===link.toLayer?'Path létrehozva':'Rétegek közötti Path létrehozva')}else notify('Kimenetet bemenettel kapcsolj össze');return}
- if(ui.reroute){const rr=ui.reroute;ui.reroute=null;const hit=document.elementFromPoint(e.clientX,e.clientY),p=hit?.closest('.port'),l=state.links.find(x=>x.id===rr.id);if(p&&l){const nEl=p.closest('.node'),lid=nEl.closest('.plane').dataset.layerId,nid=nEl.dataset.nodeId,side=p.dataset.side,port=Number(p.dataset.port);if(rr.end==='from'&&side==='out'&&!(lid===l.toLayer&&nid===l.toNode)){l.fromLayer=lid;l.fromNode=nid;l.fromPort=port;normalizePorts();refreshPorts();record();notify('Kapcsolat áthelyezve · a portok újrarendezve')}else if(rr.end==='to'&&side==='in'&&!(lid===l.fromLayer&&nid===l.fromNode)){l.toLayer=lid;l.toNode=nid;l.toPort=port;normalizePorts();refreshPorts();record();notify('Kapcsolat áthelyezve · a portok újrarendezve')}else notify('A kapcsolat végét megfelelő, másik oldali portra húzd')}draw()}
-});
-document.addEventListener('pointercancel',()=>{if(ui.shelf)finishShelf({clientX:-1,clientY:-1},true);ui.drag=null;ui.connect=null;ui.reroute=null;draw()});
-window.addEventListener('blur',()=>{if(ui.shelf)finishShelf({clientX:-1,clientY:-1},true);ui.drag=null;ui.connect=null;ui.reroute=null;draw()});
-svg.addEventListener('pointerdown',e=>{const ep=e.target.closest('.endpoint');if(ep){e.preventDefault();ui.reroute={id:ep.dataset.rewire,end:ep.dataset.end};return}});
-document.getElementById('prev').addEventListener('click',()=>{const i=activeIndex();if(i>0){state.activeLayerId=state.layers[i-1].id;applyLayerView();draw()}});
-document.getElementById('next').addEventListener('click',()=>{const i=activeIndex();if(i<state.layers.length-1){state.activeLayerId=state.layers[i+1].id;applyLayerView();draw()}});
-document.getElementById('deleteLayer').addEventListener('click',()=>{if(state.layers.length<=1){notify('Az utolsó réteg nem törölhető');return}const l=activeLayer();if(confirm(l.name+' törlése? A benne lévő oldalak és kapcsolatok is törlődnek.'))deleteLayer(l.id)});
-window.addEventListener('resize',draw);
-record();render();
+
+  function pushHistory() {
+    history = history.slice(0, historyIndex + 1);
+    history.push(JSON.stringify(serializableState()));
+    if (history.length > 100) history.shift();
+    historyIndex = history.length - 1;
+    updateHistoryButtons();
+  }
+
+  function restoreHistory(index) {
+    if (index < 0 || index >= history.length) return;
+    state = JSON.parse(history[index]);
+    historyIndex = index;
+    clearGestures();
+    renderAll();
+    updateHistoryButtons();
+  }
+
+  function undo() {
+    if (historyIndex > 0) {
+      restoreHistory(historyIndex - 1);
+      showToast('Visszavonva');
+    }
+  }
+
+  function redo() {
+    if (historyIndex < history.length - 1) {
+      restoreHistory(historyIndex + 1);
+      showToast('Újra végrehajtva');
+    }
+  }
+
+  function updateHistoryButtons() {
+    undoButton.disabled = historyIndex <= 0;
+    redoButton.disabled = historyIndex >= history.length - 1;
+  }
+
+  undoButton.addEventListener('click', undo);
+  redoButton.addEventListener('click', redo);
+
+  document.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+      event.preventDefault();
+      event.shiftKey ? redo() : undo();
+    } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
+      event.preventDefault();
+      redo();
+    }
+  });
+
+  // ============================================================
+  // 04. MODEL HELPERS — stable node/link identifiers.
+  // ============================================================
+  const getNode = id => state.nodes.find(node => node.id === id);
+  const getLink = id => state.links.find(link => link.id === id);
+
+  function getUsedPortIndexes(nodeId, side) {
+    const used = state.links
+      .filter(link => side === 'out' ? link.fromNode === nodeId : link.toNode === nodeId)
+      .map(link => side === 'out' ? link.fromPort : link.toPort);
+    return [...new Set(used)].sort((a, b) => a - b);
+  }
+
+  // Ports are allocated contiguously. The final index is always free.
+  function getPortCount(nodeId, side) {
+    return getUsedPortIndexes(nodeId, side).length + 1;
+  }
+
+  function normalizePorts() {
+    state.nodes.forEach(node => {
+      for (const side of ['out', 'in']) {
+        const connectedLinks = state.links
+          .filter(link => side === 'out' ? link.fromNode === node.id : link.toNode === node.id)
+          .sort((a, b) => (side === 'out' ? a.fromPort - b.fromPort : a.toPort - b.toPort));
+
+        connectedLinks.forEach((link, index) => {
+          if (side === 'out') link.fromPort = index;
+          else link.toPort = index;
+        });
+      }
+    });
+  }
+
+  function nodeHeight(node) {
+    return Math.max(
+      NODE_MIN_HEIGHT,
+      76 + Math.max(getPortCount(node.id, 'in'), getPortCount(node.id, 'out')) * PORT_SPACING
+    );
+  }
+
+  // ============================================================
+  // 05. PAGE MODULE — create, move, delete.
+  // ============================================================
+  function addPageAt(x, y) {
+    const number = state.nextNodeNumber++;
+    const node = {
+      id: `page_${number}`,
+      number,
+      title: `Oldal ${number}`,
+      x: Math.max(12, x - NODE_WIDTH / 2),
+      y: Math.max(72, y - 35)
+    };
+    state.nodes.push(node);
+    renderAll();
+    pushHistory();
+    showToast(`${node.title} hozzáadva`);
+  }
+
+  function deletePage(nodeId) {
+    const node = getNode(nodeId);
+    if (!node) return;
+    state.nodes = state.nodes.filter(item => item.id !== nodeId);
+    state.links = state.links.filter(link => link.fromNode !== nodeId && link.toNode !== nodeId);
+    normalizePorts();
+    renderAll();
+    pushHistory();
+    showToast(`${node.title} és kapcsolatai törölve`);
+  }
+
+  // ============================================================
+  // 06. CONNECTION MODULE — output -> input.
+  // ============================================================
+  function createConnection(source, target) {
+    if (source.side !== 'out' || target.side !== 'in') {
+      showToast('Kimenetet bemenettel kapcsolj össze');
+      return;
+    }
+    if (source.nodeId === target.nodeId) {
+      showToast('Egy oldal önmagához nem kapcsolható');
+      return;
+    }
+
+    const sourceOccupied = state.links.some(link =>
+      link.fromNode === source.nodeId && link.fromPort === source.portIndex
+    );
+    const targetOccupied = state.links.some(link =>
+      link.toNode === target.nodeId && link.toPort === target.portIndex
+    );
+    if (sourceOccupied || targetOccupied) {
+      showToast('Ez a csatlakozási pont már foglalt. Használd a mellette megjelent szabad portot.');
+      return;
+    }
+
+    state.links.push({
+      id: `path_${state.nextLinkNumber++}`,
+      fromNode: source.nodeId,
+      fromPort: source.portIndex,
+      toNode: target.nodeId,
+      toPort: target.portIndex
+    });
+
+    normalizePorts();
+    renderAll();
+    pushHistory();
+    showToast('Path létrehozva');
+  }
+
+  // ============================================================
+  // 07. PORT VIEW — occupied ports remain; one free port follows.
+  // ============================================================
+  function renderPorts(node, element) {
+    element.querySelectorAll('.port').forEach(port => port.remove());
+    const height = nodeHeight(node);
+    element.style.height = `${height}px`;
+
+    for (const side of ['in', 'out']) {
+      const count = getPortCount(node.id, side);
+      for (let index = 0; index < count; index++) {
+        const port = document.createElement('div');
+        port.className = `port ${side}`;
+        port.dataset.side = side;
+        port.dataset.portIndex = String(index);
+        port.title = `${side === 'in' ? 'Bemenet' : 'Kimenet'} ${index + 1}`;
+        port.style.top = `${height / 2 + (index - (count - 1) / 2) * PORT_SPACING}px`;
+
+        port.addEventListener('pointerdown', event => {
+          event.preventDefault();
+          event.stopPropagation();
+          ui.connection = {
+            nodeId: node.id,
+            side,
+            portIndex: index,
+            cursor: null
+          };
+          drawPaths();
+        });
+        element.appendChild(port);
+      }
+    }
+  }
+
+  // ============================================================
+  // 08. NODE VIEW — recreated from domain state.
+  // ============================================================
+  function renderNode(node) {
+    const element = document.createElement('section');
+    element.className = 'node';
+    element.dataset.nodeId = node.id;
+    element.style.left = `${node.x}px`;
+    element.style.top = `${node.y}px`;
+
+    element.innerHTML = `
+      <div class="node-head">
+        <span class="node-type">OLDAL</span>
+        <span class="node-title"></span>
+        <span class="node-id"></span>
+        <button class="node-delete" title="Oldal törlése">×</button>
+      </div>
+      <div class="node-body"><span>▤ &nbsp;Tartalmi oldal</span><span></span></div>
+      <div class="node-sub">Tartalom még nincs hozzárendelve</div>
+    `;
+
+    element.querySelector('.node-title').textContent = node.title;
+    element.querySelector('.node-id').textContent = `P${node.number}`;
+    element.querySelector('.node-delete').addEventListener('pointerdown', event => event.stopPropagation());
+    element.querySelector('.node-delete').addEventListener('click', event => {
+      event.stopPropagation();
+      deletePage(node.id);
+    });
+
+    element.addEventListener('pointerdown', event => {
+      if (event.target.closest('.node-delete') || event.target.classList.contains('port')) return;
+      if (!event.target.closest('.node-head')) return;
+
+      event.preventDefault();
+      document.querySelectorAll('.node').forEach(item => item.classList.remove('selected'));
+      element.classList.add('selected');
+
+      const point = localPoint(event.clientX, event.clientY);
+      ui.nodeDrag = {
+        nodeId: node.id,
+        offsetX: point.x - node.x,
+        offsetY: point.y - node.y,
+        originalX: node.x,
+        originalY: node.y
+      };
+    });
+
+    workspace.appendChild(element);
+    renderPorts(node, element);
+  }
+
+  // ============================================================
+  // 09. PATH ROUTER — A* orthogonal routing around node rectangles.
+  //      This module owns route geometry; node rendering does not.
+  // ============================================================
+  function getPortPoint(nodeId, side, portIndex) {
+    const node = getNode(nodeId);
+    const element = workspace.querySelector(`.node[data-node-id="${nodeId}"]`);
+    if (!node || !element) return {x: 0, y: 0};
+
+    const port = element.querySelector(`.port.${side}[data-port-index="${portIndex}"]`);
+    if (!port) return {x: node.x + (side === 'out' ? NODE_WIDTH : 0), y: node.y + nodeHeight(node) / 2};
+
+    const portRect = port.getBoundingClientRect();
+    const workspaceRect = workspace.getBoundingClientRect();
+    return {
+      x: portRect.left + portRect.width / 2 - workspaceRect.left,
+      y: portRect.top + portRect.height / 2 - workspaceRect.top
+    };
+  }
+
+  function obstacleRects(excludedNodeIds) {
+    const workspaceRect = workspace.getBoundingClientRect();
+    return state.nodes
+      .filter(node => !excludedNodeIds.includes(node.id))
+      .map(node => {
+        const element = workspace.querySelector(`.node[data-node-id="${node.id}"]`);
+        if (!element) return null;
+        const rect = element.getBoundingClientRect();
+        const padding = 16;
+        return {
+          left: rect.left - workspaceRect.left - padding,
+          top: rect.top - workspaceRect.top - padding,
+          right: rect.right - workspaceRect.left + padding,
+          bottom: rect.bottom - workspaceRect.top + padding
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function routeAroundNodes(start, end, excludedNodeIds) {
+    const lead = 24;
+    const a = {x: start.x + lead, y: start.y};
+    const b = {x: end.x - lead, y: end.y};
+    const width = workspace.clientWidth;
+    const height = workspace.clientHeight;
+    const obstacles = obstacleRects(excludedNodeIds);
+
+    const snap = value => Math.round(value / GRID) * GRID;
+    const sx = snap(a.x), sy = snap(a.y), ex = snap(b.x), ey = snap(b.y);
+    const key = (x, y, dir) => `${x},${y},${dir}`;
+    const isBlocked = (x, y) => obstacles.some(rect =>
+      x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+    );
+
+    const directions = [[1,0],[-1,0],[0,1],[0,-1]];
+    const open = [{x:sx,y:sy,dir:-1,g:0,f:Math.abs(ex-sx)+Math.abs(ey-sy),path:[]}];
+    const best = new Map();
+    let found = null;
+    let iterations = 0;
+
+    while (open.length && iterations++ < 9000) {
+      open.sort((left, right) => left.f - right.f);
+      const current = open.shift();
+      const currentKey = key(current.x,current.y,current.dir);
+      if (best.has(currentKey) && best.get(currentKey) <= current.g) continue;
+      best.set(currentKey,current.g);
+
+      if (Math.abs(current.x-ex) <= GRID && Math.abs(current.y-ey) <= GRID) {
+        found = current;
+        break;
+      }
+
+      directions.forEach(([dx,dy],directionIndex) => {
+        const x = current.x + dx*GRID;
+        const y = current.y + dy*GRID;
+        if (x < 8 || y < 8 || x > width-8 || y > height-8 || isBlocked(x,y)) return;
+
+        const turnCost = current.dir !== -1 && current.dir !== directionIndex ? 10 : 0;
+        const g = current.g + GRID + turnCost;
+        const k = key(x,y,directionIndex);
+        if (best.has(k) && best.get(k) <= g) return;
+
+        open.push({
+          x,y,dir:directionIndex,g,
+          f:g+Math.abs(ex-x)+Math.abs(ey-y),
+          path:current.path.concat([[x,y]])
+        });
+      });
+    }
+
+    if (!found) {
+      const bendX = (a.x+b.x)/2;
+      return `M ${start.x} ${start.y} C ${a.x} ${a.y}, ${bendX} ${a.y}, ${bendX} ${(a.y+b.y)/2} S ${b.x} ${b.y}, ${end.x} ${end.y}`;
+    }
+
+    let points = [[a.x,a.y], ...found.path, [b.x,b.y]];
+    points = points.filter((point,index) => index === 0 ||
+      point[0] !== points[index-1][0] || point[1] !== points[index-1][1]);
+
+    const simplified = [];
+    for (const point of points) {
+      simplified.push(point);
+      while (simplified.length >= 3) {
+        const A=simplified[simplified.length-3], B=simplified[simplified.length-2], C=simplified[simplified.length-1];
+        if ((A[0]===B[0] && B[0]===C[0]) || (A[1]===B[1] && B[1]===C[1])) simplified.splice(simplified.length-2,1);
+        else break;
+      }
+    }
+
+    let d = `M ${start.x} ${start.y} L ${a.x} ${a.y}`;
+    for (let i=1;i<simplified.length-1;i++) {
+      const A=simplified[i-1], B=simplified[i], C=simplified[i+1];
+      const v1={x:B[0]-A[0],y:B[1]-A[1]}, v2={x:C[0]-B[0],y:C[1]-B[1]};
+      const len1=Math.hypot(v1.x,v1.y)||1, len2=Math.hypot(v2.x,v2.y)||1;
+      const radius=Math.min(10,len1/2,len2/2);
+      const p1={x:B[0]-v1.x/len1*radius,y:B[1]-v1.y/len1*radius};
+      const p2={x:B[0]+v2.x/len2*radius,y:B[1]+v2.y/len2*radius};
+      d += ` L ${p1.x} ${p1.y} Q ${B[0]} ${B[1]} ${p2.x} ${p2.y}`;
+    }
+    const last=simplified[simplified.length-1];
+    d += ` L ${last[0]} ${last[1]} L ${end.x} ${end.y}`;
+    return d;
+  }
+
+  // ============================================================
+  // 10. PATH VIEW — path line and its midpoint marker.
+  // ============================================================
+  function drawPaths() {
+    const rect = workspace.getBoundingClientRect();
+    wires.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+    wires.innerHTML = '';
+
+    state.links.forEach(link => {
+      const start = getPortPoint(link.fromNode,'out',link.fromPort);
+      const end = getPortPoint(link.toNode,'in',link.toPort);
+      const pathData = routeAroundNodes(start,end,[link.fromNode,link.toNode]);
+      const path = document.createElementNS(SVG_NS,'path');
+      path.setAttribute('d',pathData);
+      path.setAttribute('class','wire');
+      wires.appendChild(path);
+
+      try {
+        const middle = path.getPointAtLength(path.getTotalLength()/2);
+        const marker = document.createElementNS(SVG_NS,'circle');
+        marker.setAttribute('cx',middle.x);
+        marker.setAttribute('cy',middle.y);
+        marker.setAttribute('r','5');
+        marker.setAttribute('class','wire-mid');
+        marker.setAttribute('data-link-id',link.id);
+        wires.appendChild(marker);
+      } catch (_) {}
+    });
+
+    if (ui.connection && ui.connection.cursor) {
+      const start = getPortPoint(ui.connection.nodeId,ui.connection.side,ui.connection.portIndex);
+      const end = ui.connection.cursor;
+      const path = document.createElementNS(SVG_NS,'path');
+      const d = ui.connection.side === 'out'
+        ? `M ${start.x} ${start.y} C ${start.x+60} ${start.y}, ${end.x-60} ${end.y}, ${end.x} ${end.y}`
+        : `M ${end.x} ${end.y} C ${end.x+60} ${end.y}, ${start.x-60} ${start.y}, ${start.x} ${start.y}`;
+      path.setAttribute('d',d);
+      path.setAttribute('class','wire preview');
+      wires.appendChild(path);
+    }
+  }
+
+  // ============================================================
+  // 11. RENDER ORCHESTRATOR — rebuild UI from domain state.
+  // ============================================================
+  function renderAll() {
+    workspace.querySelectorAll('.node').forEach(element => element.remove());
+    state.nodes.forEach(renderNode);
+    emptyMessage.style.display = state.nodes.length ? 'none' : 'grid';
+    drawPaths();
+  }
+
+  function localPoint(clientX,clientY) {
+    const rect = workspace.getBoundingClientRect();
+    return {x:clientX-rect.left,y:clientY-rect.top};
+  }
+
+  function showToast(message) {
+    toastElement.textContent = message;
+    toastElement.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastElement.classList.remove('show'),1700);
+  }
+
+  // ============================================================
+  // 12. MODULE SHELF — drag only creates a page on valid drop.
+  // ============================================================
+  function startShelfDrag(module,event) {
+    event.preventDefault();
+    const ghost = document.createElement('div');
+    ghost.className = 'ghost';
+    ghost.textContent = '▱  Új oldal';
+    document.body.appendChild(ghost);
+    ui.shelfDrag = {ghost};
+    moveShelfGhost(event.clientX,event.clientY);
+  }
+
+  function moveShelfGhost(x,y) {
+    if (!ui.shelfDrag) return;
+    ui.shelfDrag.ghost.style.left = `${x+12}px`;
+    ui.shelfDrag.ghost.style.top = `${y+12}px`;
+  }
+
+  function finishShelfDrag(event,cancelled=false) {
+    if (!ui.shelfDrag) return;
+    const drag = ui.shelfDrag;
+    ui.shelfDrag = null;
+    if (drag.ghost.isConnected) drag.ghost.remove();
+    if (cancelled) return;
+
+    const rect = workspace.getBoundingClientRect();
+    const inside = event.clientX >= rect.left && event.clientX <= rect.right &&
+                   event.clientY >= rect.top && event.clientY <= rect.bottom;
+    if (!inside) return;
+
+    const point = localPoint(event.clientX,event.clientY);
+    addPageAt(point.x,point.y);
+  }
+
+  document.querySelectorAll('.module[data-module="page"]').forEach(module => {
+    module.addEventListener('pointerdown',event => startShelfDrag(module,event));
+  });
+
+  // ============================================================
+  // 13. GLOBAL POINTER LIFECYCLE — every gesture terminates safely.
+  // ============================================================
+  document.addEventListener('pointermove',event => {
+    if (ui.shelfDrag) {
+      moveShelfGhost(event.clientX,event.clientY);
+      return;
+    }
+
+    if (ui.nodeDrag) {
+      const node = getNode(ui.nodeDrag.nodeId);
+      if (!node) return;
+      const point = localPoint(event.clientX,event.clientY);
+      node.x = Math.max(0,point.x-ui.nodeDrag.offsetX);
+      node.y = Math.max(64,point.y-ui.nodeDrag.offsetY);
+      const element = workspace.querySelector(`.node[data-node-id="${node.id}"]`);
+      if (element) {
+        element.style.left = `${node.x}px`;
+        element.style.top = `${node.y}px`;
+      }
+      drawPaths();
+      return;
+    }
+
+    if (ui.connection) {
+      ui.connection.cursor = localPoint(event.clientX,event.clientY);
+      drawPaths();
+    }
+  });
+
+  document.addEventListener('pointerup',event => {
+    if (ui.shelfDrag) {
+      finishShelfDrag(event,false);
+      return;
+    }
+
+    if (ui.nodeDrag) {
+      const drag = ui.nodeDrag;
+      ui.nodeDrag = null;
+      const node = getNode(drag.nodeId);
+      if (node && (node.x !== drag.originalX || node.y !== drag.originalY)) pushHistory();
+      return;
+    }
+
+    if (ui.connection) {
+      const source = {...ui.connection};
+      ui.connection = null;
+      const hit = document.elementFromPoint(event.clientX,event.clientY);
+      const targetPort = hit && hit.closest('.port');
+      if (targetPort) {
+        const targetNode = targetPort.closest('.node');
+        createConnection(source,{
+          nodeId:targetNode.dataset.nodeId,
+          side:targetPort.dataset.side,
+          portIndex:Number(targetPort.dataset.portIndex)
+        });
+      } else {
+        drawPaths();
+      }
+    }
+  });
+
+  function clearGestures() {
+    if (ui.shelfDrag && ui.shelfDrag.ghost.isConnected) ui.shelfDrag.ghost.remove();
+    ui.shelfDrag = null;
+    ui.nodeDrag = null;
+    ui.connection = null;
+  }
+
+  document.addEventListener('pointercancel',() => {
+    clearGestures();
+    drawPaths();
+  });
+
+  window.addEventListener('blur',() => {
+    clearGestures();
+    drawPaths();
+  });
+
+  window.addEventListener('resize',drawPaths);
+
+  // Initial baseline: empty workspace is the first undo-history state.
+  pushHistory();
+  renderAll();
 })();
 </script>
-</body></html>
+</body>
+</html>
