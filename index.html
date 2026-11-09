@@ -17,7 +17,7 @@ button{font:inherit}.tool{border:1px solid #40546c;background:#202e3e;color:#d9e
 .plane.active{pointer-events:auto;opacity:1!important;z-index:10}
 .plane-surface{position:absolute;inset:28px 26px 25px;border:1px solid #49627b;border-radius:14px;background:linear-gradient(135deg,#1b2c3d20,#101a2820);box-shadow:inset 0 0 55px #0002;pointer-events:none}
 .plane.active .plane-surface{border-color:#587a9b}
-.plane-label{position:absolute;left:42px;top:36px;padding:5px 9px;border:1px solid #49627b;border-radius:6px;background:#182838e8;color:#b7cbe0;font-size:10px;letter-spacing:.1em;font-weight:800;pointer-events:none}
+.plane-label{display:none;position:absolute;left:42px;top:36px;padding:5px 9px;border:1px solid #49627b;border-radius:6px;background:#182838e8;color:#b7cbe0;font-size:10px;letter-spacing:.1em;font-weight:800;pointer-events:none}
 .plane.active .plane-label{border-color:var(--blue);color:#e3f1ff;background:#1c3045ee}
 .node{position:absolute;width:218px;min-height:112px;border:1px solid #6683a2;border-radius:10px;background:#1b2938;box-shadow:0 8px 24px #0005;user-select:none}
 .node.selected{outline:2px solid var(--blue);outline-offset:2px}
@@ -49,7 +49,7 @@ button{font:inherit}.tool{border:1px solid #40546c;background:#202e3e;color:#d9e
 .depth-label{position:absolute;right:18px;top:19px;z-index:25;color:#8298b1;font-size:10px;pointer-events:none;text-align:right}
 .layer-list{position:absolute;left:16px;top:58px;z-index:25;display:flex;gap:5px;max-width:calc(100% - 32px);overflow-x:auto;padding:3px 2px 7px}
 .layer-chip{border:1px solid #40546c;border-radius:6px;padding:5px 8px;background:#172637e8;color:#91a4bb;font-size:10px;white-space:nowrap;cursor:pointer}
-.layer-chip.active{border-color:var(--blue);background:#233b52;color:#e6f3ff}
+.layer-chip.active{border-color:var(--blue);background:#233b52;color:#e6f3ff}.layer-list{background:#142131e8;border:1px solid #34475d;border-radius:8px;padding:5px 6px;max-width:calc(100% - 32px);min-height:30px}.layerbar{backdrop-filter:blur(8px)}
 .toast{position:absolute;left:18px;bottom:16px;padding:8px 11px;background:#1c2b3b;border:1px solid #3b526c;border-radius:7px;color:#a9bbcf;font-size:11px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:40}.toast.show{opacity:1}
 @media(max-width:760px){.app{grid-template-columns:minmax(0,1fr) 205px}.hint{display:none}.shelf{padding:12px 9px}.plane-surface{inset:68px 9px 15px}.plane-label{top:76px;left:20px}}
 </style></head>
@@ -109,9 +109,19 @@ document.addEventListener('keydown',e=>{
  if(ui.connect&&(e.shiftKey)&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const i=activeIndex(),ni=e.key==='ArrowDown'?Math.min(state.layers.length-1,i+1):Math.max(0,i-1);if(ni!==i){state.activeLayerId=state.layers[ni].id;applyLayerView();draw();notify('Célréteg: '+state.layers[ni].name)}}
 });
 function coords(clientX,clientY,el){const r=el.getBoundingClientRect();return{x:clientX-r.left,y:clientY-r.top}}
-function portUse(nid,side){return state.links.filter(l=>side==='out'?l.fromNode===nid:l.toNode===nid).map(l=>side==='out'?l.fromPort:l.toPort)}
-function portCount(nid,side){const used=portUse(nid,side);return Math.max(1,used.length?Math.max(...used)+2:1)}
-function height(n){return Math.max(H,76+Math.max(portCount(n.id,'in'),portCount(n.id,'out'))*GAP)}
+function portUse(nid,side,lid=null){return state.links.filter(l=>(side==='out'?l.fromNode===nid:l.toNode===nid)&&(!lid||(side==='out'?l.fromLayer:l.toLayer)===lid)).map(l=>side==='out'?l.fromPort:l.toPort)}
+function portCount(nid,side,lid=null){return portUse(nid,side,lid).length+1}
+function normalizePorts(){
+ const seen=new Set();
+ state.layers.forEach(layerData=>layerData.nodes.forEach(n=>{
+  ['out','in'].forEach(side=>{
+   const refs=state.links.filter(l=>side==='out'?(l.fromLayer===layerData.id&&l.fromNode===n.id):(l.toLayer===layerData.id&&l.toNode===n.id));
+   refs.sort((a,b)=>(side==='out'?a.fromPort-b.fromPort:a.toPort-b.toPort));
+   refs.forEach((l,i)=>{if(side==='out')l.fromPort=i;else l.toPort=i});
+  });
+ }));
+}
+function height(n,lid){return Math.max(H,76+Math.max(portCount(n.id,'in',lid),portCount(n.id,'out',lid))*GAP)}
 function createPlane(l){const p=document.createElement('div');p.className='plane';p.dataset.layerId=l.id;p.innerHTML='<div class="plane-surface"></div><div class="plane-label"></div>';world.appendChild(p);l.el=p;l.label=p.querySelector('.plane-label')}
 function drawNode(l,n){
  const el=document.createElement('section');el.className='node';el.dataset.nodeId=n.id;
@@ -121,7 +131,7 @@ function drawNode(l,n){
  el.querySelector('.del').addEventListener('pointerdown',e=>e.stopPropagation());
  el.querySelector('.del').addEventListener('click',e=>{e.stopPropagation();deletePage(l.id,n.id)});
 }
-function drawPorts(l,n){if(!n.el)return;n.el.querySelectorAll('.port').forEach(p=>p.remove());const h=height(n);n.el.style.height=h+'px';['in','out'].forEach(side=>{for(let i=0;i<portCount(n.id,side);i++){const p=document.createElement('div');p.className='port '+side;p.dataset.side=side;p.dataset.port=String(i);p.title=(side==='in'?'Bemenet ':'Kimenet ')+(i+1);p.style.top=(h/2+(i-(portCount(n.id,side)-1)/2)*GAP)+'px';p.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();ui.connect={lid:l.id,nid:n.id,side,port:i};draw()});n.el.appendChild(p)}})}
+function drawPorts(l,n){if(!n.el)return;n.el.querySelectorAll('.port').forEach(p=>p.remove());const h=height(n,l.id);n.el.style.height=h+'px';['in','out'].forEach(side=>{for(let i=0;i<portCount(n.id,side,l.id);i++){const p=document.createElement('div');p.className='port '+side;p.dataset.side=side;p.dataset.port=String(i);p.title=(side==='in'?'Bemenet ':'Kimenet ')+(i+1);p.style.top=(h/2+(i-(portCount(n.id,side,l.id)-1)/2)*GAP)+'px';p.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();ui.connect={lid:l.id,nid:n.id,side,port:i};draw()});n.el.appendChild(p)}})}
 function refreshPorts(){state.layers.forEach(l=>l.nodes.forEach(n=>drawPorts(l,n)))}
 function addPage(x,y){const l=activeLayer(),id='P'+state.nextPage++,n={id,name:'Oldal '+(state.nextPage-1),x:Math.max(10,x-W/2),y:Math.max(100,y-36)};l.nodes.push(n);drawNode(l,n);updateEmpty();draw();record();notify('Oldal hozzáadva · '+l.name)}
 function addLayer(){
@@ -131,12 +141,12 @@ function addLayer(){
  state.layers.splice(i+1,0,fresh);state.activeLayerId=id;
  render();record();notify(name+' létrehozva az aktív réteg mögött');
 }
-function deletePage(lid,nid){const l=layer(lid);if(!l)return;l.nodes=l.nodes.filter(n=>n.id!==nid);state.links=state.links.filter(x=>!(x.fromLayer===lid&&x.fromNode===nid)&&!(x.toLayer===lid&&x.toNode===nid));render();record();notify('Oldal és kapcsolatai törölve')}
-function deleteLayer(lid){if(state.layers.length<=1){notify('Az utolsó réteg nem törölhető');return}const idx=state.layers.findIndex(l=>l.id===lid);if(idx<0)return;const [removed]=state.layers.splice(idx,1);state.links=state.links.filter(x=>x.fromLayer!==lid&&x.toLayer!==lid);if(state.activeLayerId===lid)state.activeLayerId=state.layers[Math.max(0,idx-1)].id;render();record();notify(removed.name+' és kapcsolatai törölve')}
+function deletePage(lid,nid){const l=layer(lid);if(!l)return;l.nodes=l.nodes.filter(n=>n.id!==nid);state.links=state.links.filter(x=>!(x.fromLayer===lid&&x.fromNode===nid)&&!(x.toLayer===lid&&x.toNode===nid));normalizePorts();render();record();notify('Oldal és kapcsolatai törölve')}
+function deleteLayer(lid){if(state.layers.length<=1){notify('Az utolsó réteg nem törölhető');return}const idx=state.layers.findIndex(l=>l.id===lid);if(idx<0)return;const [removed]=state.layers.splice(idx,1);state.links=state.links.filter(x=>x.fromLayer!==lid&&x.toLayer!==lid);normalizePorts();if(state.activeLayerId===lid)state.activeLayerId=state.layers[Math.max(0,idx-1)].id;render();record();notify(removed.name+' és kapcsolatai törölve')}
 function updateEmpty(){empty.style.display=state.layers.every(l=>l.nodes.length===0)?'grid':'none'}
 function applyLayerView(){
  const ai=activeIndex();
- state.layers.forEach((l,i)=>{const d=Math.abs(i-ai),behind=i<ai;const z=-d*190;const x=behind?-d*7:d*7;const y=d*9;l.el.classList.toggle('active',i===ai);l.el.style.transform=`translate3d(${x}px,${y}px,${z}px) scale(${1-d*.045})`;l.el.style.opacity=i===ai?'1':String(Math.max(.12,.30-d*.035));l.label.textContent=l.name.toUpperCase()+(i===ai?' · AKTÍV':'')});
+ state.layers.forEach((l,i)=>{const d=Math.abs(i-ai),behind=i<ai;const z=-d*190;const x=behind?-d*7:d*7;const y=d*9;l.el.classList.toggle('active',i===ai);l.el.style.transform=`translate3d(${x}px,${y}px,${z}px) scale(${1-d*.045})`;l.el.style.opacity=i===ai?'1':String(Math.max(.12,.30-d*.035));l.label.textContent=l.name.toUpperCase()+(i===ai?' · AKTÍV':'');l.renderOpacity=i===ai?1:Math.max(.12,.30-d*.035)});
  document.getElementById('activeName').textContent=activeLayer().name.toUpperCase();
  document.getElementById('count').textContent=(ai+1)+' / '+state.layers.length;
  document.getElementById('prev').disabled=ai<=0;document.getElementById('next').disabled=ai>=state.layers.length-1;
@@ -145,17 +155,57 @@ function applyLayerView(){
 }
 function render(){world.innerHTML='';state.layers.forEach(l=>{createPlane(l);l.nodes.forEach(n=>drawNode(l,n))});applyLayerView();updateEmpty();draw()}
 function portScreen(lid,nid,side,index){const n=node(lid,nid),p=n?.el?.querySelector(`.port.${side}[data-port="${index}"]`);if(!p)return{x:0,y:0};const a=p.getBoundingClientRect(),w=ws.getBoundingClientRect();return{x:a.left+a.width/2-w.left,y:a.top+a.height/2-w.top}}
+
 function curve(a,b,cross=false){if(cross){const dx=b.x-a.x,dy=b.y-a.y,arc=Math.max(50,Math.min(145,Math.abs(dx)*.18+Math.abs(dy)*.12));return `M${a.x},${a.y} C${a.x+dx*.25},${a.y-arc} ${a.x+dx*.75},${b.y-arc} ${b.x},${b.y}`}const dx=Math.max(40,Math.abs(b.x-a.x)*.42);return `M${a.x},${a.y} C${a.x+dx},${a.y} ${b.x-dx},${b.y} ${b.x},${b.y}`}
+function nodeRectsForLayer(lid,excludeIds=[]){
+ const w=ws.getBoundingClientRect(),L=layer(lid);if(!L)return [];
+ return L.nodes.filter(n=>!excludeIds.includes(n.id)&&n.el).map(n=>{const r=n.el.getBoundingClientRect();return{x:r.left-w.left-16,y:r.top-w.top-16,right:r.right-w.left+16,bottom:r.bottom-w.top+16}});
+}
+function obstacleRoute(a,b,lid,sourceId,targetId){
+ const step=14,lead=24,start={x:a.x+lead,y:a.y},finish={x:b.x-lead,y:b.y},w=ws.clientWidth,h=ws.clientHeight;
+ const obs=nodeRectsForLayer(lid,[sourceId,targetId]);
+ const blocked=(x,y)=>obs.some(o=>x>=o.x&&x<=o.right&&y>=o.y&&y<=o.bottom);
+ const key=(x,y)=>x+','+y, snap=v=>Math.round(v/step)*step;
+ const sx=snap(start.x),sy=snap(start.y),tx=snap(finish.x),ty=snap(finish.y);
+ const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+ const open=[{x:sx,y:sy,g:0,f:Math.abs(tx-sx)+Math.abs(ty-sy),dir:-1,path:[]}],best=new Map(),max=12000;let found=null,loops=0;
+ while(open.length&&loops++<max){
+  open.sort((a,b)=>a.f-b.f);const cur=open.shift(),k=key(cur.x,cur.y)+'|'+cur.dir;if(best.has(k)&&best.get(k)<=cur.g)continue;best.set(k,cur.g);
+  if(Math.abs(cur.x-tx)<=step&&Math.abs(cur.y-ty)<=step){found=cur;break}
+  for(let di=0;di<4;di++){const nx=cur.x+dirs[di][0]*step,ny=cur.y+dirs[di][1]*step;if(nx<8||ny<8||nx>w-8||ny>h-8||blocked(nx,ny))continue;
+   const turn=cur.dir!==-1&&cur.dir!==di?11:0,g=cur.g+step+turn,nk=key(nx,ny)+'|'+di;if(best.has(nk)&&best.get(nk)<=g)continue;
+   open.push({x:nx,y:ny,g,f:g+Math.abs(tx-nx)+Math.abs(ty-ny),dir:di,path:cur.path.concat([[nx,ny]])});
+  }
+ }
+ if(!found)return curve(a,b,false);
+ let pts=[[start.x,start.y],...found.path,[finish.x,finish.y]];
+ // Remove duplicate and collinear grid points.
+ pts=pts.filter((p,i)=>i===0||p[0]!==pts[i-1][0]||p[1]!==pts[i-1][1]);
+ const simple=[];for(const p of pts){simple.push(p);while(simple.length>=3){const A=simple[simple.length-3],B=simple[simple.length-2],C=simple[simple.length-1];if((A[0]===B[0]&&B[0]===C[0])||(A[1]===B[1]&&B[1]===C[1]))simple.splice(simple.length-2,1);else break}}
+ let d=`M${a.x},${a.y} L${start.x},${start.y}`;
+ for(let i=1;i<simple.length-1;i++){const A=simple[i-1],B=simple[i],C=simple[i+1],r=10;const v1={x:B[0]-A[0],y:B[1]-A[1]},v2={x:C[0]-B[0],y:C[1]-B[1]},len1=Math.hypot(v1.x,v1.y),len2=Math.hypot(v2.x,v2.y),rr=Math.min(r,len1/2,len2/2),p1={x:B[0]-v1.x/len1*rr,y:B[1]-v1.y/len1*rr},p2={x:B[0]+v2.x/len2*rr,y:B[1]+v2.y/len2*rr};d+=` L${p1.x},${p1.y} Q${B[0]},${B[1]} ${p2.x},${p2.y}`}
+ const last=simple[simple.length-1];d+=` L${last[0]},${last[1]} L${b.x},${b.y}`;return d;
+}
+function linkOpacity(l){
+ const a=layer(l.fromLayer),b=layer(l.toLayer);if(!a||!b)return 0;
+ if(l.fromLayer===l.toLayer)return a.renderOpacity??1;
+ return Math.min(a.renderOpacity??1,b.renderOpacity??1);
+}
 function draw(){
  const r=ws.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);svg.innerHTML='';
- state.links.forEach(l=>{const a=portScreen(l.fromLayer,l.fromNode,'out',l.fromPort),b=portScreen(l.toLayer,l.toNode,'in',l.toPort),cross=l.fromLayer!==l.toLayer,p=document.createElementNS(NS,'path');p.setAttribute('d',curve(a,b,cross));p.setAttribute('class','wire'+(cross?' cross':''));svg.appendChild(p);
-  try{const m=p.getPointAtLength(p.getTotalLength()/2),dot=document.createElementNS(NS,'circle');dot.setAttribute('cx',m.x);dot.setAttribute('cy',m.y);dot.setAttribute('r','6');dot.setAttribute('class','mid');dot.dataset.link=l.id;dot.setAttribute('title',l.effect?EFFECTS[l.effect]:'Effekt befogadó pont');svg.appendChild(dot);
-   if(l.effect){const t=document.createElementNS(NS,'text');t.setAttribute('x',m.x);t.setAttribute('y',m.y-12);t.setAttribute('fill','#d6c5ff');t.setAttribute('font-size','10');t.setAttribute('text-anchor','middle');t.textContent=EFFECTS[l.effect];svg.appendChild(t)}
-   const da=document.createElementNS(NS,'circle');da.setAttribute('cx',a.x);da.setAttribute('cy',a.y);da.setAttribute('r','4');da.setAttribute('class','endpoint');da.dataset.rewire=l.id;da.dataset.end='from';svg.appendChild(da);
-   const db=document.createElementNS(NS,'circle');db.setAttribute('cx',b.x);db.setAttribute('cy',b.y);db.setAttribute('r','4');db.setAttribute('class','endpoint');db.dataset.rewire=l.id;db.dataset.end='to';svg.appendChild(db);
+ state.links.forEach(l=>{
+  const a=portScreen(l.fromLayer,l.fromNode,'out',l.fromPort),b=portScreen(l.toLayer,l.toNode,'in',l.toPort),cross=l.fromLayer!==l.toLayer;
+  const d=cross?curve(a,b,true):obstacleRoute(a,b,l.fromLayer,l.fromNode,l.toNode);
+  const opacity=linkOpacity(l),p=document.createElementNS(NS,'path');p.setAttribute('d',d);p.setAttribute('class','wire'+(cross?' cross':''));p.setAttribute('opacity',opacity);svg.appendChild(p);
+  try{
+   const m=p.getPointAtLength(p.getTotalLength()/2),dot=document.createElementNS(NS,'circle');dot.setAttribute('cx',m.x);dot.setAttribute('cy',m.y);dot.setAttribute('r','6');dot.setAttribute('class','mid');dot.setAttribute('opacity',opacity);dot.dataset.link=l.id;dot.setAttribute('title',l.effect?EFFECTS[l.effect]:'Effekt befogadó pont');svg.appendChild(dot);
+   if(l.effect){const t=document.createElementNS(NS,'text');t.setAttribute('x',m.x);t.setAttribute('y',m.y-12);t.setAttribute('fill','#d6c5ff');t.setAttribute('font-size','10');t.setAttribute('text-anchor','middle');t.setAttribute('opacity',opacity);t.textContent=EFFECTS[l.effect];svg.appendChild(t)}
+   const da=document.createElementNS(NS,'circle');da.setAttribute('cx',a.x);da.setAttribute('cy',a.y);da.setAttribute('r','4');da.setAttribute('class','endpoint');da.setAttribute('opacity',opacity);da.dataset.rewire=l.id;da.dataset.end='from';svg.appendChild(da);
+   const db=document.createElementNS(NS,'circle');db.setAttribute('cx',b.x);db.setAttribute('cy',b.y);db.setAttribute('r','4');db.setAttribute('class','endpoint');db.setAttribute('opacity',opacity);db.dataset.rewire=l.id;db.dataset.end='to';svg.appendChild(db);
   }catch(_){}
  });
- if(ui.connect){const a=portScreen(ui.connect.lid,ui.connect.nid,ui.connect.side,ui.connect.port),b=ui.connect.cursor||a,p=document.createElementNS(NS,'path');p.setAttribute('d',ui.connect.side==='out'?curve(a,b):curve(b,a));p.setAttribute('class','wire temp');svg.appendChild(p)}
+ if(ui.connect&&ui.connect.cursor){const a=portScreen(ui.connect.lid,ui.connect.nid,ui.connect.side,ui.connect.port),b=ui.connect.cursor,p=document.createElementNS(NS,'path');p.setAttribute('d',ui.connect.side==='out'?curve(a,b,false):curve(b,a,false));p.setAttribute('class','wire temp');svg.appendChild(p)}
+ if(ui.reroute&&ui.reroute.cursor){const l=state.links.find(x=>x.id===ui.reroute.id);if(l){const a=ui.reroute.end==='from'?ui.reroute.cursor:portScreen(l.fromLayer,l.fromNode,'out',l.fromPort),b=ui.reroute.end==='to'?ui.reroute.cursor:portScreen(l.toLayer,l.toNode,'in',l.toPort),p=document.createElementNS(NS,'path');p.setAttribute('d',curve(a,b,l.fromLayer!==l.toLayer));p.setAttribute('class','wire temp');svg.appendChild(p)}}
 }
 function startShelf(el,e){e.preventDefault();const kind=el.dataset.kind;ui.shelf={kind,effect:el.dataset.effect||null,pointerId:e.pointerId,ghost:document.createElement('div')};ui.shelf.ghost.className='ghost'+(kind==='effect'?' effect':'');ui.shelf.ghost.textContent=kind==='page'?'▱  Új oldal':kind==='layer'?'▤  Új réteg':EFFECTS[ui.shelf.effect];document.body.appendChild(ui.shelf.ghost);moveGhost(e.clientX,e.clientY)}
 function moveGhost(x,y){if(ui.shelf){ui.shelf.ghost.style.left=(x+12)+'px';ui.shelf.ghost.style.top=(y+12)+'px'}}
@@ -170,8 +220,8 @@ document.addEventListener('pointermove',e=>{
 document.addEventListener('pointerup',e=>{
  if(ui.shelf){finishShelf(e,false);return}
  if(ui.drag){const d=ui.drag,n=node(d.lid,d.nid);ui.drag=null;if(n&&(n.x!==d.orig.x||n.y!==d.orig.y))record();return}
- if(ui.connect){const c=ui.connect;ui.connect=null;const hit=document.elementFromPoint(e.clientX,e.clientY),p=hit?.closest('.port');if(!p){draw();return}const nEl=p.closest('.node'),plane=nEl?.closest('.plane'),lid=plane?.dataset.layerId,nid=nEl?.dataset.nodeId,side=p.dataset.side,port=Number(p.dataset.port);let link=null;if(c.side==='out'&&side==='in')link={fromLayer:c.lid,fromNode:c.nid,fromPort:c.port,toLayer:lid,toNode:nid,toPort:port,effect:null,id:'C'+(Date.now())};else if(c.side==='in'&&side==='out')link={fromLayer:lid,fromNode:nid,fromPort:port,toLayer:c.lid,toNode:c.nid,toPort:c.port,effect:null,id:'C'+(Date.now())};if(link&&!(link.fromLayer===link.toLayer&&link.fromNode===link.toNode)){state.links.push(link);refreshPorts();draw();record();notify(link.fromLayer===link.toLayer?'Path létrehozva':'Rétegek közötti Path létrehozva')}else notify('Kimenetet bemenettel kapcsolj össze');return}
- if(ui.reroute){const rr=ui.reroute;ui.reroute=null;const hit=document.elementFromPoint(e.clientX,e.clientY),p=hit?.closest('.port'),l=state.links.find(x=>x.id===rr.id);if(p&&l){const nEl=p.closest('.node'),lid=nEl.closest('.plane').dataset.layerId,nid=nEl.dataset.nodeId,side=p.dataset.side,port=Number(p.dataset.port);if(rr.end==='from'&&side==='out'){l.fromLayer=lid;l.fromNode=nid;l.fromPort=port;refreshPorts();record();notify('Kapcsolat áthelyezve')}else if(rr.end==='to'&&side==='in'){l.toLayer=lid;l.toNode=nid;l.toPort=port;refreshPorts();record();notify('Kapcsolat áthelyezve')}else notify('A kapcsolat végét azonos típusú portra húzd')}draw()}
+ if(ui.connect){const c=ui.connect;ui.connect=null;const hit=document.elementFromPoint(e.clientX,e.clientY),p=hit?.closest('.port');if(!p){draw();return}const nEl=p.closest('.node'),plane=nEl?.closest('.plane'),lid=plane?.dataset.layerId,nid=nEl?.dataset.nodeId,side=p.dataset.side,port=Number(p.dataset.port);let link=null;if(c.side==='out'&&side==='in')link={fromLayer:c.lid,fromNode:c.nid,fromPort:c.port,toLayer:lid,toNode:nid,toPort:port,effect:null,id:'C'+(Date.now())};else if(c.side==='in'&&side==='out')link={fromLayer:lid,fromNode:nid,fromPort:port,toLayer:c.lid,toNode:c.nid,toPort:c.port,effect:null,id:'C'+(Date.now())};if(link&&!(link.fromLayer===link.toLayer&&link.fromNode===link.toNode)){state.links.push(link);normalizePorts();refreshPorts();draw();record();notify(link.fromLayer===link.toLayer?'Path létrehozva':'Rétegek közötti Path létrehozva')}else notify('Kimenetet bemenettel kapcsolj össze');return}
+ if(ui.reroute){const rr=ui.reroute;ui.reroute=null;const hit=document.elementFromPoint(e.clientX,e.clientY),p=hit?.closest('.port'),l=state.links.find(x=>x.id===rr.id);if(p&&l){const nEl=p.closest('.node'),lid=nEl.closest('.plane').dataset.layerId,nid=nEl.dataset.nodeId,side=p.dataset.side,port=Number(p.dataset.port);if(rr.end==='from'&&side==='out'&&!(lid===l.toLayer&&nid===l.toNode)){l.fromLayer=lid;l.fromNode=nid;l.fromPort=port;normalizePorts();refreshPorts();record();notify('Kapcsolat áthelyezve · a portok újrarendezve')}else if(rr.end==='to'&&side==='in'&&!(lid===l.fromLayer&&nid===l.fromNode)){l.toLayer=lid;l.toNode=nid;l.toPort=port;normalizePorts();refreshPorts();record();notify('Kapcsolat áthelyezve · a portok újrarendezve')}else notify('A kapcsolat végét megfelelő, másik oldali portra húzd')}draw()}
 });
 document.addEventListener('pointercancel',()=>{if(ui.shelf)finishShelf({clientX:-1,clientY:-1},true);ui.drag=null;ui.connect=null;ui.reroute=null;draw()});
 window.addEventListener('blur',()=>{if(ui.shelf)finishShelf({clientX:-1,clientY:-1},true);ui.drag=null;ui.connect=null;ui.reroute=null;draw()});
