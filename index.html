@@ -2,127 +2,185 @@
 <html lang="hu">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NewWorld Designer 0.6</title>
+<title>NewWorld Designer 0.7</title>
 <style>
 :root{color-scheme:dark;--bg:#101722;--panel:#182332;--line:#34475d;--text:#e8eef7;--muted:#91a4bb;--blue:#75b8ff;--gold:#f3c66c;--violet:#b79be8}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font:14px/1.4 Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
-.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 260px;grid-template-rows:54px minmax(0,1fr)}
-.top{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 16px;background:#151f2c;border-bottom:1px solid #2b3b4e;z-index:30}.brand{font-weight:750;letter-spacing:.04em}.version{color:var(--muted);font-size:12px}.top-actions{display:flex;gap:7px;margin-left:12px}.toolbtn{border:1px solid #40546c;background:#202e3e;color:#d9e7f6;border-radius:7px;padding:7px 11px;font:inherit;font-size:12px;cursor:pointer}.toolbtn:hover:not(:disabled){border-color:#75b8ff;background:#263b51}.toolbtn:disabled{opacity:.35;cursor:default}.hint{margin-left:auto;color:var(--muted);font-size:11px}
-.workspace{position:relative;overflow:hidden;background-color:#0e1621;background-image:radial-gradient(#30445b 1px,transparent 1px);background-size:24px 24px;touch-action:none;perspective:1100px;perspective-origin:50% 45%}
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 258px;grid-template-rows:54px minmax(0,1fr)}
+header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 16px;background:#151f2c;border-bottom:1px solid #2b3b4e;z-index:30}
+.brand{font-weight:750;letter-spacing:.04em}.version{color:var(--muted);font-size:12px}.actions{display:flex;gap:7px;margin-left:12px}
+button{font:inherit}.tool{border:1px solid #40546c;background:#202e3e;color:#d9e7f6;border-radius:7px;padding:7px 11px;font-size:12px;cursor:pointer}.tool:hover:not(:disabled){border-color:var(--blue);background:#263b51}.tool:disabled{opacity:.35;cursor:default}
+.hint{margin-left:auto;color:var(--muted);font-size:11px}
+.workspace{position:relative;overflow:hidden;background-color:#0e1621;background-image:radial-gradient(#30445b 1px,transparent 1px);background-size:24px 24px;perspective:1100px;perspective-origin:50% 48%;touch-action:none}
 .world{position:absolute;inset:0;transform-style:preserve-3d}
-.plane{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:50% 45%;transition:transform .28s ease,opacity .28s ease,filter .28s ease}
-.plane.active{opacity:1;filter:none;pointer-events:auto;z-index:10}
-.plane.inactive{opacity:.22;filter:saturate(.55);pointer-events:none}
-.plane-surface{position:absolute;inset:24px 30px 28px;border:1px solid #344b63;border-radius:15px;background:linear-gradient(135deg,#17263733,#101a2833);box-shadow:inset 0 0 50px #0002;pointer-events:none}
-.plane.active .plane-surface{border-color:#45627f;background:linear-gradient(135deg,#1b2c3d22,#101a2822);box-shadow:inset 0 0 55px #0002}
-.plane-label{position:absolute;top:34px;left:46px;padding:5px 9px;border:1px solid #49627b;border-radius:6px;background:#182838d9;color:#b7cbe0;font-size:10px;letter-spacing:.1em;font-weight:800;pointer-events:none}
-.plane.active .plane-label{border-color:#75b8ff;color:#dcecff;background:#1c3045ee}
+.plane{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:50% 48%;transition:transform .25s ease,opacity .25s ease;pointer-events:none}
+.plane.active{pointer-events:auto;opacity:1!important;z-index:10}
+.plane-surface{position:absolute;inset:28px 26px 25px;border:1px solid #49627b;border-radius:14px;background:linear-gradient(135deg,#1b2c3d20,#101a2820);box-shadow:inset 0 0 55px #0002;pointer-events:none}
+.plane.active .plane-surface{border-color:#587a9b}
+.plane-label{position:absolute;left:42px;top:36px;padding:5px 9px;border:1px solid #49627b;border-radius:6px;background:#182838e8;color:#b7cbe0;font-size:10px;letter-spacing:.1em;font-weight:800;pointer-events:none}
+.plane.active .plane-label{border-color:var(--blue);color:#e3f1ff;background:#1c3045ee}
 .node{position:absolute;width:218px;min-height:112px;border:1px solid #6683a2;border-radius:10px;background:#1b2938;box-shadow:0 8px 24px #0005;user-select:none}
-.plane.inactive .node{box-shadow:0 5px 16px #0003}
-.node.selected{outline:2px solid #6eb6ff;outline-offset:2px}.node-head{height:39px;padding:0 9px 0 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid #354b61;border-radius:9px 9px 0 0;background:#23364a;cursor:grab;touch-action:none}.node-head:active{cursor:grabbing}.node-type{font-size:9px;letter-spacing:.1em;color:#a9c9e8;font-weight:800}.node-title{font-size:13px;font-weight:700;flex:1}.node-delete{width:22px;height:22px;border:0;border-radius:5px;background:transparent;color:#9fb2c8;font-size:17px;line-height:1;cursor:pointer;padding:0}.node-delete:hover{background:#573b45;color:#fff}.node-body{padding:13px 14px 12px;display:flex;align-items:center;justify-content:space-between;color:#c8d5e4;font-size:12px}.node-sub{padding:0 14px 12px;color:#8198b1;font-size:10px}
-.port{position:absolute;width:15px;height:15px;border-radius:50%;background:#152331;border:2px solid var(--gold);box-shadow:0 0 0 2px #0e1621;cursor:crosshair;z-index:3;transform:translateY(-50%)}.port.in{left:-8px}.port.out{right:-8px;border-color:var(--blue)}.port:hover{filter:brightness(1.35);transform:translateY(-50%) scale(1.12)}
-.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:20}.wire{fill:none;stroke:#83baff;stroke-width:2.2;opacity:.88;stroke-linejoin:round;stroke-linecap:round}.wire.cross{stroke:#c2a6ff;stroke-width:2.5;stroke-dasharray:7 4;opacity:.96}.wire.temp{stroke:#f3c66c;stroke-dasharray:6 5;opacity:.95}.wire-mid{fill:#f3c66c;stroke:#0e1621;stroke-width:2;cursor:copy;pointer-events:all}.wire-mid:hover{fill:#fff0bd;stroke:#75b8ff;stroke-width:2.5}.wire-effect{fill:#d7c5ff;font-size:10px;font-weight:700;pointer-events:none;text-anchor:middle}
-.empty{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;color:#71859c;text-align:center;z-index:1}.empty div{max-width:290px}.empty strong{display:block;color:#a9bbcf;font-size:16px;margin-bottom:7px}.empty span{font-size:12px}
-.shelf{background:#172230;border-left:1px solid #2b3b4e;padding:15px 14px;overflow:auto;z-index:30}.shelf h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#a9bbcf;margin:2px 0 12px}.module{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #40546c;border-radius:9px;background:#202e3e;cursor:grab;user-select:none;touch-action:none;margin-bottom:8px}.module:active{cursor:grabbing}.module-icon{width:29px;height:29px;border-radius:7px;background:#29425a;display:grid;place-items:center;color:#a9d4ff;font-weight:800;font-size:16px;flex:none}.module strong{display:block;font-size:12px}.module small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.shelf-note{margin:12px 0 18px;color:#8397ad;font-size:10px;line-height:1.55}.shelf-divider{height:1px;background:#34475d;margin:17px 0}.effect-item{border-color:#594d75;background:#29263a}.effect-item .module-icon{background:#453b60;color:#d6c5ff}
-.ghost{position:fixed;z-index:1000;pointer-events:none;padding:12px 14px;border:1px solid #75b8ff;border-radius:9px;background:#23364a;box-shadow:0 12px 32px #0008;opacity:.95;font-weight:700;color:#e8eef7;min-width:160px}.ghost.effect{border-color:#b79be8;background:#302a43}
+.node.selected{outline:2px solid var(--blue);outline-offset:2px}
+.node-head{height:39px;padding:0 9px 0 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid #354b61;border-radius:9px 9px 0 0;background:#23364a;cursor:grab;touch-action:none}
+.node-head:active{cursor:grabbing}.node-type{font-size:9px;letter-spacing:.1em;color:#a9c9e8;font-weight:800}.node-title{font-size:13px;font-weight:700;flex:1}
+.del{width:22px;height:22px;border:0;border-radius:5px;background:transparent;color:#9fb2c8;font-size:17px;cursor:pointer}.del:hover{background:#573b45;color:#fff}
+.node-body{padding:13px 14px 12px;display:flex;justify-content:space-between;color:#c8d5e4;font-size:12px}.node-sub{padding:0 14px 12px;color:#8198b1;font-size:10px}
+.port{position:absolute;width:15px;height:15px;border-radius:50%;background:#152331;border:2px solid var(--gold);box-shadow:0 0 0 2px #0e1621;z-index:4;transform:translateY(-50%);cursor:crosshair}
+.port.in{left:-8px}.port.out{right:-8px;border-color:var(--blue)}.port:hover{filter:brightness(1.35);transform:translateY(-50%) scale(1.12)}
+.wires{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:20}
+.wire{fill:none;stroke:#83baff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;opacity:.92}
+.wire.cross{stroke:#c3a8ff;stroke-width:2.5;stroke-dasharray:7 4}
+.wire.temp{stroke:var(--gold);stroke-dasharray:6 5}
+.mid{fill:var(--gold);stroke:#0e1621;stroke-width:2;pointer-events:all;cursor:copy}
+.endpoint{fill:#172637;stroke:#b7d9ff;stroke-width:2;pointer-events:all;cursor:grab}
+.empty{position:absolute;inset:0;display:grid;place-items:center;color:#71859c;text-align:center;pointer-events:none;z-index:1}.empty strong{display:block;color:#a9bbcf;font-size:16px;margin-bottom:7px}.empty span{font-size:12px}
+.shelf{background:#172230;border-left:1px solid #2b3b4e;padding:15px 14px;overflow:auto;z-index:30}.shelf h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#a9bbcf;margin:2px 0 12px}
+.module{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #40546c;border-radius:9px;background:#202e3e;cursor:grab;user-select:none;touch-action:none;margin-bottom:8px}.module:active{cursor:grabbing}
+.ico{width:29px;height:29px;border-radius:7px;background:#29425a;display:grid;place-items:center;color:#a9d4ff;font-weight:800;font-size:16px;flex:none}
+.module strong{display:block;font-size:12px}.module small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.effect{border-color:#594d75;background:#29263a}.effect .ico{background:#453b60;color:#d6c5ff}
+.note{margin:12px 0 18px;color:#8397ad;font-size:10px;line-height:1.55}.sep{height:1px;background:#34475d;margin:16px 0}
+.ghost{position:fixed;z-index:1000;pointer-events:none;padding:11px 14px;border:1px solid var(--blue);border-radius:9px;background:#23364a;box-shadow:0 12px 32px #0008;opacity:.96;font-weight:700;color:#e8eef7;min-width:155px}
+.ghost.effect{border-color:var(--violet);background:#302a43}
+.layerbar{position:absolute;top:15px;left:16px;z-index:25;display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid #3c526a;border-radius:9px;background:#172637ed}
+.layerbar button{width:26px;height:24px;border:1px solid #40546c;border-radius:5px;background:#202e3e;color:#d9e7f6;cursor:pointer}.layerbar button:disabled{opacity:.3;cursor:default}
+.layer-name{font-size:11px;color:#e1eefb;font-weight:750;min-width:78px;text-align:center}
+.layer-count{font-size:10px;color:#8298b1;margin-left:5px}
+.depth-label{position:absolute;right:18px;top:19px;z-index:25;color:#8298b1;font-size:10px;pointer-events:none;text-align:right}
+.layer-list{position:absolute;left:16px;top:58px;z-index:25;display:flex;gap:5px;max-width:calc(100% - 32px);overflow-x:auto;padding:3px 2px 7px}
+.layer-chip{border:1px solid #40546c;border-radius:6px;padding:5px 8px;background:#172637e8;color:#91a4bb;font-size:10px;white-space:nowrap;cursor:pointer}
+.layer-chip.active{border-color:var(--blue);background:#233b52;color:#e6f3ff}
 .toast{position:absolute;left:18px;bottom:16px;padding:8px 11px;background:#1c2b3b;border:1px solid #3b526c;border-radius:7px;color:#a9bbcf;font-size:11px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:40}.toast.show{opacity:1}
-.layer-controls{position:absolute;left:18px;top:16px;z-index:25;display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid #3c526a;border-radius:9px;background:#172637df;backdrop-filter:blur(8px)}
-.layer-controls .layer-name{font-size:11px;color:#d8e8f8;font-weight:700;min-width:74px;text-align:center}.layer-controls button{width:25px;height:24px;border:1px solid #40546c;border-radius:5px;background:#202e3e;color:#d9e7f6;cursor:pointer}.layer-controls button:disabled{opacity:.3;cursor:default}
-.depth-hint{position:absolute;right:18px;top:16px;z-index:25;color:#8298b1;font-size:10px;text-align:right;pointer-events:none}
-.drop-highlight{filter:drop-shadow(0 0 7px #c3a8ff)}
-@media(max-width:780px){.app{grid-template-columns:minmax(0,1fr) 210px}.hint{display:none}.shelf{padding:12px 9px}.plane-surface{inset:54px 10px 18px}.plane-label{top:60px;left:22px}}
+@media(max-width:760px){.app{grid-template-columns:minmax(0,1fr) 205px}.hint{display:none}.shelf{padding:12px 9px}.plane-surface{inset:68px 9px 15px}.plane-label{top:76px;left:20px}}
 </style></head>
 <body>
 <div class="app">
-<header class="top"><div class="brand">NEWWORLD DESIGNER</div><div class="version">0.6 · spatial workspace</div><div class="top-actions"><button class="toolbtn" id="undoBtn" disabled title="Visszavonás (Ctrl+Z)">↶ Undo</button><button class="toolbtn" id="redoBtn" disabled title="Újra (Ctrl+Shift+Z)">↷ Redo</button></div><div class="hint">Rétegváltás kapcsolat húzása közben: SHIFT + ↑ / ↓</div></header>
-<main class="workspace" id="workspace">
+<header><div class="brand">NEWWORLD DESIGNER</div><div class="version">0.7 · layer foundation</div><div class="actions"><button class="tool" id="undo" disabled>↶ Undo</button><button class="tool" id="redo" disabled>↷ Redo</button></div><div class="hint">Kapcsolat húzása közben: SHIFT + ↑ / ↓ rétegváltás</div></header>
+<main class="workspace" id="ws">
  <div class="world" id="world"></div><svg class="wires" id="wires"></svg>
- <div class="layer-controls"><button id="layerPrev" title="Előrébb lévő réteg">‹</button><span class="layer-name" id="activeLayerName">RÉTEG 1</span><button id="layerNext" title="Hátrébb lévő réteg">›</button></div>
- <div class="depth-hint">AKTÍV RÉTEG ELÖL · INAKTÍV RÉTEGEK HÁTRÉBB</div>
+ <div class="layerbar"><button id="prev" title="Előző réteg">‹</button><span class="layer-name" id="activeName">RÉTEG 1</span><button id="next" title="Következő réteg">›</button><span class="layer-count" id="count">1 / 1</span><button id="deleteLayer" title="Aktív réteg törlése">×</button></div>
+ <div class="layer-list" id="layerList"></div>
+ <div class="depth-label">AKTÍV RÉTEG ELÖL · TÖBBI RÉTEG HÁTRÉBB</div>
  <div class="empty" id="empty"><div><strong>Üres munkaterület</strong><span>Húzd be jobbról az „Oldal” modult a kezdéshez.</span></div></div>
  <div class="toast" id="toast"></div>
 </main>
 <aside class="shelf">
  <h2>Világ modulok</h2>
- <div class="module" data-kind="page"><div class="module-icon">▱</div><div><strong>Oldal</strong><small>Üres, alakítható oldal</small></div></div>
- <div class="module" data-kind="layer"><div class="module-icon">▤</div><div><strong>Új réteg</strong><small>Az aktív réteg mögé</small></div></div>
- <div class="shelf-note">Az oldal az aktív réteg síkjára kerül. Az új réteg az aktív réteg mögé épül be.</div>
- <div class="shelf-divider"></div>
+ <div class="module" data-kind="page"><div class="ico">▱</div><div><strong>Oldal</strong><small>Üres, alakítható oldal</small></div></div>
+ <div class="module" data-kind="layer"><div class="ico">▤</div><div><strong>Új réteg</strong><small>Az aktív réteg mögé</small></div></div>
+ <div class="note">Az új réteg az aktív réteg mögé kerül, majd azonnal aktívvá válik. A rétegek neve és sorrendje felül is látható.</div>
+ <div class="sep"></div>
  <h2>Effekt modulok · Flip</h2>
- <div class="module effect-item" data-kind="effect" data-effect="left"><div class="module-icon">↶</div><div><strong>Flip · Balra</strong><small>Balra forduló lapátmenet</small></div></div>
- <div class="module effect-item" data-kind="effect" data-effect="right"><div class="module-icon">↷</div><div><strong>Flip · Jobbra</strong><small>Jobbra forduló lapátmenet</small></div></div>
- <div class="module effect-item" data-kind="effect" data-effect="up"><div class="module-icon">↑</div><div><strong>Flip · Felfelé</strong><small>Felfelé forduló lapátmenet</small></div></div>
- <div class="module effect-item" data-kind="effect" data-effect="down"><div class="module-icon">↓</div><div><strong>Flip · Lefelé</strong><small>Lefelé forduló lapátmenet</small></div></div>
- <div class="module effect-item" data-kind="effect" data-effect="depthIn"><div class="module-icon">⊕</div><div><strong>Flip · Mélységbe</strong><small>Belépés a következő rétegbe</small></div></div>
- <div class="module effect-item" data-kind="effect" data-effect="depthOut"><div class="module-icon">⊖</div><div><strong>Flip · Mélységből kifelé</strong><small>Visszatérés az előző rétegből</small></div></div>
- <div class="shelf-note">Húzd a kívánt effektet egy Path középponti körére. Az effekt a kapcsolathoz kerül, nem az oldalhoz.</div>
+ <div class="module effect" data-kind="effect" data-effect="left"><div class="ico">↶</div><div><strong>Flip · Balra</strong><small>Balra forduló lapátmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="right"><div class="ico">↷</div><div><strong>Flip · Jobbra</strong><small>Jobbra forduló lapátmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="up"><div class="ico">↑</div><div><strong>Flip · Felfelé</strong><small>Felfelé forduló lapátmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="down"><div class="ico">↓</div><div><strong>Flip · Lefelé</strong><small>Lefelé forduló lapátmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="depthIn"><div class="ico">⊕</div><div><strong>Flip · Mélységbe</strong><small>Belépés a következő rétegbe</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="depthOut"><div class="ico">⊖</div><div><strong>Flip · Mélységből</strong><small>Visszatérés az előző rétegből</small></div></div>
+ <div class="note">Húzd az effektet egy kapcsolat középponti körére. Az effekt a kapcsolathoz tartozik.</div>
 </aside>
 </div>
 <script>
 (()=>{
- const ws=document.getElementById('workspace'),world=document.getElementById('world'),svg=document.getElementById('wires'),empty=document.getElementById('empty'),toast=document.getElementById('toast');
- const undoBtn=document.getElementById('undoBtn'),redoBtn=document.getElementById('redoBtn'),activeName=document.getElementById('activeLayerName');
- const NS='http://www.w3.org/2000/svg',NODE_W=218,BASE_H=112,PORT_GAP=24;
- const effectNames={left:'Flip · Balra',right:'Flip · Jobbra',up:'Flip · Felfelé',down:'Flip · Lefelé',depthIn:'Flip · Mélységbe',depthOut:'Flip · Mélységből kifelé'};
- let layers=[{id:'layer_1',name:'Réteg 1',nodes:[]}],links=[],activeLayerId='layer_1',nextNodeId=1,nextLayerId=2;
- let dragNode=null,shelfDrag=null,connect=null,tempPoint=null,toastTimer,history=[],historyIndex=-1,restoring=false;
- const activeIndex=()=>layers.findIndex(l=>l.id===activeLayerId),active=()=>layers[activeIndex()]||layers[0];
- function say(s){toast.textContent=s;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1900)}
- function snapshot(){return JSON.stringify({layers:layers.map(l=>({id:l.id,name:l.name,nodes:l.nodes.map(n=>({id:n.id,x:n.x,y:n.y,name:n.name}))})),links:links.map(l=>({...l})),activeLayerId,nextNodeId,nextLayerId})}
- function saveHistory(){if(restoring)return;history=history.slice(0,historyIndex+1);history.push(snapshot());if(history.length>100)history.shift();historyIndex=history.length-1;updateHistory()}
- function updateHistory(){undoBtn.disabled=historyIndex<=0;redoBtn.disabled=historyIndex>=history.length-1}
- function restore(s){restoring=true;const d=JSON.parse(s);layers=d.layers;links=d.links;activeLayerId=d.activeLayerId;nextNodeId=d.nextNodeId;nextLayerId=d.nextLayerId;dragNode=null;connect=null;renderAll();restoring=false;updateHistory()}
- function undo(){if(historyIndex>0){historyIndex--;restore(history[historyIndex]);say('Visszavonva')}}
- function redo(){if(historyIndex<history.length-1){historyIndex++;restore(history[historyIndex]);say('Újra végrehajtva')}}
- undoBtn.onclick=undo;redoBtn.onclick=redo;
- document.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();return}
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();return}
-  if(connect&&e.shiftKey&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const i=activeIndex(),ni=e.key==='ArrowDown'?Math.min(layers.length-1,i+1):Math.max(0,i-1);if(ni!==i){activeLayerId=layers[ni].id;applyDepth();draw();say('Aktív célréteg: '+layers[ni].name)}else say('Nincs további réteg ebben az irányban')}
+'use strict';
+const ws=document.getElementById('ws'),world=document.getElementById('world'),svg=document.getElementById('wires');
+const toastEl=document.getElementById('toast'),empty=document.getElementById('empty');
+const undoBtn=document.getElementById('undo'),redoBtn=document.getElementById('redo');
+const NS='http://www.w3.org/2000/svg',W=218,H=112,GAP=24;
+const EFFECTS={left:'Flip · Balra',right:'Flip · Jobbra',up:'Flip · Felfelé',down:'Flip · Lefelé',depthIn:'Flip · Mélységbe',depthOut:'Flip · Mélységből'};
+let state={layers:[{id:'L1',name:'Réteg 1',nodes:[]}],links:[],activeLayerId:'L1',nextLayer:2,nextPage:1};
+let ui={drag:null,connect:null,shelf:null,reroute:null};
+let history=[],historyAt=-1,restoring=false,toastTimer=null;
+const activeIndex=()=>state.layers.findIndex(l=>l.id===state.activeLayerId);
+const activeLayer=()=>state.layers[activeIndex()];
+const layer=id=>state.layers.find(l=>l.id===id);
+const node=(lid,nid)=>layer(lid)?.nodes.find(n=>n.id===nid);
+function notify(s){toastEl.textContent=s;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1800)}
+function cleanState(){return {layers:state.layers.map(l=>({id:l.id,name:l.name,nodes:l.nodes.map(n=>({id:n.id,name:n.name,x:n.x,y:n.y}))})),links:state.links.map(l=>({...l})),activeLayerId:state.activeLayerId,nextLayer:state.nextLayer,nextPage:state.nextPage}}
+function record(){if(restoring)return;history=history.slice(0,historyAt+1);history.push(JSON.stringify(cleanState()));if(history.length>100)history.shift();historyAt=history.length-1;historyButtons()}
+function historyButtons(){undoBtn.disabled=historyAt<=0;redoBtn.disabled=historyAt>=history.length-1}
+function loadSnapshot(raw){restoring=true;state=JSON.parse(raw);ui={drag:null,connect:null,shelf:null,reroute:null};render();restoring=false;historyButtons()}
+function undo(){if(historyAt>0){historyAt--;loadSnapshot(history[historyAt]);notify('Visszavonva')}}
+function redo(){if(historyAt<history.length-1){historyAt++;loadSnapshot(history[historyAt]);notify('Újra végrehajtva')}}
+undoBtn.addEventListener('click',undo);redoBtn.addEventListener('click',redo);
+document.addEventListener('keydown',e=>{
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();return}
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();return}
+ if(ui.connect&&(e.shiftKey)&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const i=activeIndex(),ni=e.key==='ArrowDown'?Math.min(state.layers.length-1,i+1):Math.max(0,i-1);if(ni!==i){state.activeLayerId=state.layers[ni].id;applyLayerView();draw();notify('Célréteg: '+state.layers[ni].name)}}
+});
+function coords(clientX,clientY,el){const r=el.getBoundingClientRect();return{x:clientX-r.left,y:clientY-r.top}}
+function portUse(nid,side){return state.links.filter(l=>side==='out'?l.fromNode===nid:l.toNode===nid).map(l=>side==='out'?l.fromPort:l.toPort)}
+function portCount(nid,side){const used=portUse(nid,side);return Math.max(1,used.length?Math.max(...used)+2:1)}
+function height(n){return Math.max(H,76+Math.max(portCount(n.id,'in'),portCount(n.id,'out'))*GAP)}
+function createPlane(l){const p=document.createElement('div');p.className='plane';p.dataset.layerId=l.id;p.innerHTML='<div class="plane-surface"></div><div class="plane-label"></div>';world.appendChild(p);l.el=p;l.label=p.querySelector('.plane-label')}
+function drawNode(l,n){
+ const el=document.createElement('section');el.className='node';el.dataset.nodeId=n.id;
+ el.innerHTML='<div class="node-head"><span class="node-type">OLDAL</span><span class="node-title"></span><button class="del" title="Oldal törlése">×</button></div><div class="node-body"><span>▤ &nbsp;Tartalmi oldal</span><span class="node-id"></span></div><div class="node-sub">Tartalom még nincs hozzárendelve</div>';
+ el.querySelector('.node-title').textContent=n.name;el.querySelector('.node-id').textContent=n.id;el.style.left=n.x+'px';el.style.top=n.y+'px';l.el.appendChild(el);n.el=el;drawPorts(l,n);
+ el.addEventListener('pointerdown',e=>{if(e.target.closest('.del')||e.target.classList.contains('port'))return;if(e.target.closest('.node-head')){e.preventDefault();document.querySelectorAll('.node').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');const p=coords(e.clientX,e.clientY,l.el);ui.drag={lid:l.id,nid:n.id,dx:p.x-n.x,dy:p.y-n.y,orig:{x:n.x,y:n.y}}}});
+ el.querySelector('.del').addEventListener('pointerdown',e=>e.stopPropagation());
+ el.querySelector('.del').addEventListener('click',e=>{e.stopPropagation();deletePage(l.id,n.id)});
+}
+function drawPorts(l,n){if(!n.el)return;n.el.querySelectorAll('.port').forEach(p=>p.remove());const h=height(n);n.el.style.height=h+'px';['in','out'].forEach(side=>{for(let i=0;i<portCount(n.id,side);i++){const p=document.createElement('div');p.className='port '+side;p.dataset.side=side;p.dataset.port=String(i);p.title=(side==='in'?'Bemenet ':'Kimenet ')+(i+1);p.style.top=(h/2+(i-(portCount(n.id,side)-1)/2)*GAP)+'px';p.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();ui.connect={lid:l.id,nid:n.id,side,port:i};draw()});n.el.appendChild(p)}})}
+function refreshPorts(){state.layers.forEach(l=>l.nodes.forEach(n=>drawPorts(l,n)))}
+function addPage(x,y){const l=activeLayer(),id='P'+state.nextPage++,n={id,name:'Oldal '+(state.nextPage-1),x:Math.max(10,x-W/2),y:Math.max(100,y-36)};l.nodes.push(n);drawNode(l,n);updateEmpty();draw();record();notify('Oldal hozzáadva · '+l.name)}
+function addLayer(){
+ const i=activeIndex(),id='L'+state.nextLayer++,name='Réteg '+(state.nextLayer-1);
+ const fresh={id,name,nodes:[]};
+ // Insert directly behind the current active layer; then activate the new layer.
+ state.layers.splice(i+1,0,fresh);state.activeLayerId=id;
+ render();record();notify(name+' létrehozva az aktív réteg mögött');
+}
+function deletePage(lid,nid){const l=layer(lid);if(!l)return;l.nodes=l.nodes.filter(n=>n.id!==nid);state.links=state.links.filter(x=>!(x.fromLayer===lid&&x.fromNode===nid)&&!(x.toLayer===lid&&x.toNode===nid));render();record();notify('Oldal és kapcsolatai törölve')}
+function deleteLayer(lid){if(state.layers.length<=1){notify('Az utolsó réteg nem törölhető');return}const idx=state.layers.findIndex(l=>l.id===lid);if(idx<0)return;const [removed]=state.layers.splice(idx,1);state.links=state.links.filter(x=>x.fromLayer!==lid&&x.toLayer!==lid);if(state.activeLayerId===lid)state.activeLayerId=state.layers[Math.max(0,idx-1)].id;render();record();notify(removed.name+' és kapcsolatai törölve')}
+function updateEmpty(){empty.style.display=state.layers.every(l=>l.nodes.length===0)?'grid':'none'}
+function applyLayerView(){
+ const ai=activeIndex();
+ state.layers.forEach((l,i)=>{const d=Math.abs(i-ai),behind=i<ai;const z=-d*190;const x=behind?-d*7:d*7;const y=d*9;l.el.classList.toggle('active',i===ai);l.el.style.transform=`translate3d(${x}px,${y}px,${z}px) scale(${1-d*.045})`;l.el.style.opacity=i===ai?'1':String(Math.max(.12,.30-d*.035));l.label.textContent=l.name.toUpperCase()+(i===ai?' · AKTÍV':'')});
+ document.getElementById('activeName').textContent=activeLayer().name.toUpperCase();
+ document.getElementById('count').textContent=(ai+1)+' / '+state.layers.length;
+ document.getElementById('prev').disabled=ai<=0;document.getElementById('next').disabled=ai>=state.layers.length-1;
+ const list=document.getElementById('layerList');list.innerHTML='';
+ state.layers.forEach((l,i)=>{const b=document.createElement('button');b.className='layer-chip'+(l.id===state.activeLayerId?' active':'');b.textContent=(i+1)+'. '+l.name+' · '+l.nodes.length+' oldal';b.title='Váltás: '+l.name;b.addEventListener('click',()=>{state.activeLayerId=l.id;applyLayerView();draw()});b.addEventListener('contextmenu',e=>{e.preventDefault();if(confirm(l.name+' törlése? A benne lévő oldalak és kapcsolatok is törlődnek.'))deleteLayer(l.id)});list.appendChild(b)});
+}
+function render(){world.innerHTML='';state.layers.forEach(l=>{createPlane(l);l.nodes.forEach(n=>drawNode(l,n))});applyLayerView();updateEmpty();draw()}
+function portScreen(lid,nid,side,index){const n=node(lid,nid),p=n?.el?.querySelector(`.port.${side}[data-port="${index}"]`);if(!p)return{x:0,y:0};const a=p.getBoundingClientRect(),w=ws.getBoundingClientRect();return{x:a.left+a.width/2-w.left,y:a.top+a.height/2-w.top}}
+function curve(a,b,cross=false){if(cross){const dx=b.x-a.x,dy=b.y-a.y,arc=Math.max(50,Math.min(145,Math.abs(dx)*.18+Math.abs(dy)*.12));return `M${a.x},${a.y} C${a.x+dx*.25},${a.y-arc} ${a.x+dx*.75},${b.y-arc} ${b.x},${b.y}`}const dx=Math.max(40,Math.abs(b.x-a.x)*.42);return `M${a.x},${a.y} C${a.x+dx},${a.y} ${b.x-dx},${b.y} ${b.x},${b.y}`}
+function draw(){
+ const r=ws.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);svg.innerHTML='';
+ state.links.forEach(l=>{const a=portScreen(l.fromLayer,l.fromNode,'out',l.fromPort),b=portScreen(l.toLayer,l.toNode,'in',l.toPort),cross=l.fromLayer!==l.toLayer,p=document.createElementNS(NS,'path');p.setAttribute('d',curve(a,b,cross));p.setAttribute('class','wire'+(cross?' cross':''));svg.appendChild(p);
+  try{const m=p.getPointAtLength(p.getTotalLength()/2),dot=document.createElementNS(NS,'circle');dot.setAttribute('cx',m.x);dot.setAttribute('cy',m.y);dot.setAttribute('r','6');dot.setAttribute('class','mid');dot.dataset.link=l.id;dot.setAttribute('title',l.effect?EFFECTS[l.effect]:'Effekt befogadó pont');svg.appendChild(dot);
+   if(l.effect){const t=document.createElementNS(NS,'text');t.setAttribute('x',m.x);t.setAttribute('y',m.y-12);t.setAttribute('fill','#d6c5ff');t.setAttribute('font-size','10');t.setAttribute('text-anchor','middle');t.textContent=EFFECTS[l.effect];svg.appendChild(t)}
+   const da=document.createElementNS(NS,'circle');da.setAttribute('cx',a.x);da.setAttribute('cy',a.y);da.setAttribute('r','4');da.setAttribute('class','endpoint');da.dataset.rewire=l.id;da.dataset.end='from';svg.appendChild(da);
+   const db=document.createElementNS(NS,'circle');db.setAttribute('cx',b.x);db.setAttribute('cy',b.y);db.setAttribute('r','4');db.setAttribute('class','endpoint');db.dataset.rewire=l.id;db.dataset.end='to';svg.appendChild(db);
+  }catch(_){}
  });
- function localPoint(clientX,clientY,plane){const r=plane.getBoundingClientRect();return{x:(clientX-r.left)/r.width*ws.clientWidth,y:(clientY-r.top)/r.height*ws.clientHeight}}
- function portCount(nodeId,side){const used=links.filter(l=>side==='out'?(l.fromNode===nodeId):(l.toNode===nodeId)).map(l=>side==='out'?l.fromPort:l.toPort);return Math.max(1,used.length?Math.max(...used)+2:1)}
- function nodeHeight(n){return Math.max(BASE_H,76+Math.max(portCount(n.id,'in'),portCount(n.id,'out'))*PORT_GAP)}
- function layerById(id){return layers.find(l=>l.id===id)}
- function nodeById(layerId,nodeId){return layerById(layerId)?.nodes.find(n=>n.id===nodeId)}
- function createPlane(layer){const p=document.createElement('div');p.className='plane';p.dataset.layer=layer.id;p.innerHTML='<div class="plane-surface"></div><div class="plane-label"></div>';world.appendChild(p);layer.el=p;layer.label=p.querySelector('.plane-label');return p}
- function renderNode(layer,n){const el=document.createElement('section');el.className='node';el.dataset.id=n.id;el.innerHTML='<div class="node-head"><span class="node-type">OLDAL</span><span class="node-title"></span><button class="node-delete" title="Oldal törlése">×</button></div><div class="node-body"><span>▤ &nbsp;Tartalmi oldal</span><span style="color:#7f9bb8"></span></div><div class="node-sub">Tartalom még nincs hozzárendelve</div>';el.querySelector('.node-title').textContent=n.name;el.querySelector('.node-body span:last-child').textContent=n.id;el.style.left=n.x+'px';el.style.top=n.y+'px';layer.el.appendChild(el);n.el=el;
-  updatePorts(layer,n);
-  el.addEventListener('pointerdown',e=>{if(e.target.closest('.node-delete')||e.target.classList.contains('port'))return;if(e.target.closest('.node-head')){e.preventDefault();document.querySelectorAll('.node').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');const p=localPoint(e.clientX,e.clientY,layer.el);dragNode={layerId:layer.id,nodeId:n.id,offset:{x:p.x-n.x,y:p.y-n.y},start:{x:n.x,y:n.y}}}});
-  el.querySelector('.node-delete').addEventListener('pointerdown',e=>e.stopPropagation());el.querySelector('.node-delete').addEventListener('click',e=>{e.stopPropagation();deleteNode(layer.id,n.id)});
- }
- function updatePorts(layer,n){n.el.querySelectorAll('.port').forEach(x=>x.remove());const h=nodeHeight(n);n.el.style.height=h+'px';['in','out'].forEach(side=>{const count=portCount(n.id,side);for(let i=0;i<count;i++){const port=document.createElement('div');port.className='port '+side;port.dataset.side=side;port.dataset.index=i;port.title=side==='in'?'Bemenet':'Kimenet';port.style.top=(h/2+(i-(count-1)/2)*PORT_GAP)+'px';port.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();connect={side,layerId:layer.id,nodeId:n.id,port:i};tempPoint={x:e.clientX,y:e.clientY};draw()});n.el.appendChild(port)}})}
- function refreshPorts(){layers.forEach(l=>l.nodes.forEach(n=>updatePorts(l,n)))}
- function addPage(layerId,x,y){const l=layerById(layerId),id='page_'+nextNodeId++;const n={id,name:'Oldal '+(nextNodeId-1),x:Math.max(12,x-NODE_W/2),y:Math.max(90,y-36)};l.nodes.push(n);renderNode(l,n);empty.style.display='none';draw();saveHistory();say('Oldal hozzáadva · '+l.name)}
- function addLayer(){const i=activeIndex(),id='layer_'+nextLayerId++,name='Réteg '+(nextLayerId-1),l={id,name,nodes:[]};layers.splice(i+1,0,l);activeLayerId=id;renderAll();saveHistory();say(name+' létrehozva az aktív réteg mögött')}
- function deleteNode(layerId,nodeId){const l=layerById(layerId);if(!l)return;const n=nodeById(layerId,nodeId);if(n?.el)n.el.remove();l.nodes=l.nodes.filter(x=>x.id!==nodeId);links=links.filter(x=>!(x.fromLayer===layerId&&x.fromNode===nodeId)&&!(x.toLayer===layerId&&x.toNode===nodeId));refreshPorts();draw();updateEmpty();saveHistory();say('Oldal és kapcsolatai törölve')}
- function updateEmpty(){empty.style.display=layers.every(l=>l.nodes.length===0)?'grid':'none'}
- function applyDepth(){const ai=activeIndex();layers.forEach((l,i)=>{const d=Math.abs(i-ai),plane=l.el;plane.classList.toggle('active',i===ai);plane.classList.toggle('inactive',i!==ai);plane.style.transform=i===ai?'translate3d(0,0,0) scale(1)':'translate3d('+(Math.sign(ai-i)*d*9)+'px,'+(d*13)+'px,'+(-d*175)+'px) scale('+(1-d*.055)+')';plane.style.zIndex=String(100-d);plane.style.opacity=i===ai?'1':String(Math.max(.10,.27-d*.035));plane.label.textContent=l.name.toUpperCase()+(i===ai?' · AKTÍV':'')});activeName.textContent=active().name.toUpperCase();document.getElementById('layerPrev').disabled=ai<=0;document.getElementById('layerNext').disabled=ai>=layers.length-1;draw()}
- function renderAll(){world.innerHTML='';layers.forEach(l=>{createPlane(l);l.nodes.forEach(n=>renderNode(l,n))});applyDepth();updateEmpty()}
- function moveGhost(e){if(!shelfDrag)return;shelfDrag.ghost.style.left=(e.clientX+12)+'px';shelfDrag.ghost.style.top=(e.clientY+12)+'px'}
- function startShelfDrag(el,e){e.preventDefault();const kind=el.dataset.kind;shelfDrag={kind,effect:el.dataset.effect||null,ghost:document.createElement('div')};shelfDrag.ghost.className='ghost'+(kind==='effect'?' effect':'');shelfDrag.ghost.textContent=kind==='page'?'▱  Új oldal':kind==='layer'?'▤  Új réteg':effectNames[shelfDrag.effect];document.body.appendChild(shelfDrag.ghost);moveGhost(e)}
- document.querySelectorAll('.module').forEach(el=>el.addEventListener('pointerdown',e=>startShelfDrag(el,e)));
- document.addEventListener('pointermove',e=>{
-  if(shelfDrag){moveGhost(e);return}
-  if(dragNode){const l=layerById(dragNode.layerId),n=nodeById(dragNode.layerId,dragNode.nodeId);if(!l||!n)return;const p=localPoint(e.clientX,e.clientY,l.el);n.x=Math.max(0,p.x-dragNode.offset.x);n.y=Math.max(76,p.y-dragNode.offset.y);n.el.style.left=n.x+'px';n.el.style.top=n.y+'px';draw();return}
-  if(connect){tempPoint={x:e.clientX,y:e.clientY};draw()}
- });
- document.addEventListener('pointerup',e=>{
-  if(shelfDrag){const r=ws.getBoundingClientRect(),inside=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;if(inside){const p=localPoint(e.clientX,e.clientY,active().el);if(shelfDrag.kind==='page')addPage(activeLayerId,p.x,p.y);else if(shelfDrag.kind==='layer')addLayer();else applyEffectDrop(e.clientX,e.clientY,shelfDrag.effect)}shelfDrag.ghost.remove();shelfDrag=null;return}
-  if(dragNode){const n=nodeById(dragNode.layerId,dragNode.nodeId);if(n&&(n.x!==dragNode.start.x||n.y!==dragNode.start.y))saveHistory();dragNode=null;return}
-  if(connect){const target=document.elementFromPoint(e.clientX,e.clientY),port=target?.closest('.port');if(port){const targetNode=port.closest('.node'),targetLayer=targetNode?.closest('.plane')?.dataset.layer,targetId=targetNode?.dataset.id,side=port.dataset.side,index=Number(port.dataset.index);let fromLayer,fromNode,fromPort,toLayer,toNode,toPort;if(connect.side==='out'&&side==='in'){({layerId:fromLayer,nodeId:fromNode,port:fromPort}=connect);toLayer=targetLayer;toNode=targetId;toPort=index}else if(connect.side==='in'&&side==='out'){fromLayer=targetLayer;fromNode=targetId;fromPort=index;({layerId:toLayer,nodeId:toNode,port:toPort}=connect)}if(fromNode&&toNode&&!(fromLayer===toLayer&&fromNode===toNode)&&!links.some(l=>l.fromLayer===fromLayer&&l.fromNode===fromNode&&l.fromPort===fromPort&&l.toLayer===toLayer&&l.toNode===toNode&&l.toPort===toPort)){links.push({id:'link_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),fromLayer,fromNode,fromPort,toLayer,toNode,toPort,effect:null});refreshPorts();saveHistory();say(fromLayer===toLayer?'Kapcsolat létrehozva':'Rétegek közötti kapcsolat létrehozva')}else say('Kimenetet bemenettel kapcsolj össze')}connect=null;tempPoint=null;draw()}
- });
- function screenPort(layerId,nodeId,side,index){const n=nodeById(layerId,nodeId);if(!n?.el)return{x:0,y:0};const p=n.el.querySelector(`.port.${side}[data-index="${index}"]`);if(!p)return{x:0,y:0};const r=p.getBoundingClientRect(),w=ws.getBoundingClientRect();return{x:r.left+r.width/2-w.left,y:r.top+r.height/2-w.top}}
- function pathFor(a,b,cross){if(cross){const dx=b.x-a.x,dy=b.y-a.y;const lift=Math.max(42,Math.min(130,Math.abs(dx)*.18+Math.abs(dy)*.12));return `M ${a.x} ${a.y} C ${a.x+dx*.25} ${a.y-lift}, ${a.x+dx*.75} ${b.y-lift}, ${b.x} ${b.y}`}
-  const dx=Math.max(40,Math.abs(b.x-a.x)*.42);return `M ${a.x} ${a.y} C ${a.x+dx} ${a.y}, ${b.x-dx} ${b.y}, ${b.x} ${b.y}`}
- function draw(){const r=ws.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);svg.innerHTML='';
-  links.forEach(l=>{const a=screenPort(l.fromLayer,l.fromNode,'out',l.fromPort),b=screenPort(l.toLayer,l.toNode,'in',l.toPort),cross=l.fromLayer!==l.toLayer,p=document.createElementNS(NS,'path');p.setAttribute('d',pathFor(a,b,cross));p.setAttribute('class','wire'+(cross?' cross':''));svg.appendChild(p);try{const m=p.getPointAtLength(p.getTotalLength()/2),dot=document.createElementNS(NS,'circle');dot.setAttribute('cx',m.x);dot.setAttribute('cy',m.y);dot.setAttribute('r','6');dot.setAttribute('class','wire-mid');dot.dataset.linkId=l.id;dot.setAttribute('title',l.effect?effectNames[l.effect]:'Effekt behelyezési pont');svg.appendChild(dot);if(l.effect){const t=document.createElementNS(NS,'text');t.setAttribute('x',m.x);t.setAttribute('y',m.y-12);t.setAttribute('class','wire-effect');t.textContent=effectNames[l.effect];svg.appendChild(t)}}catch(_){}});
-  if(connect&&tempPoint){const a=screenPort(connect.layerId,connect.nodeId,connect.side,connect.port),b={x:tempPoint.x-r.left,y:tempPoint.y-r.top},p=document.createElementNS(NS,'path');p.setAttribute('d',connect.side==='out'?pathFor(a,b,false):pathFor(b,a,false));p.setAttribute('class','wire temp');svg.appendChild(p)}
- }
- function applyEffectDrop(clientX,clientY,effect){const el=document.elementFromPoint(clientX,clientY),dot=el?.closest('.wire-mid');if(!dot){say('Az effektet egy Path középponti körére húzd');return}const l=links.find(x=>x.id===dot.dataset.linkId);if(!l)return;l.effect=effect;draw();saveHistory();say(effectNames[effect]+' hozzárendelve')}
- document.getElementById('layerPrev').onclick=()=>{const i=activeIndex();if(i>0){activeLayerId=layers[i-1].id;applyDepth()}};
- document.getElementById('layerNext').onclick=()=>{const i=activeIndex();if(i<layers.length-1){activeLayerId=layers[i+1].id;applyDepth()}};
- window.addEventListener('resize',draw);
- saveHistory();renderAll();
+ if(ui.connect){const a=portScreen(ui.connect.lid,ui.connect.nid,ui.connect.side,ui.connect.port),b=ui.connect.cursor||a,p=document.createElementNS(NS,'path');p.setAttribute('d',ui.connect.side==='out'?curve(a,b):curve(b,a));p.setAttribute('class','wire temp');svg.appendChild(p)}
+}
+function startShelf(el,e){e.preventDefault();const kind=el.dataset.kind;ui.shelf={kind,effect:el.dataset.effect||null,pointerId:e.pointerId,ghost:document.createElement('div')};ui.shelf.ghost.className='ghost'+(kind==='effect'?' effect':'');ui.shelf.ghost.textContent=kind==='page'?'▱  Új oldal':kind==='layer'?'▤  Új réteg':EFFECTS[ui.shelf.effect];document.body.appendChild(ui.shelf.ghost);moveGhost(e.clientX,e.clientY)}
+function moveGhost(x,y){if(ui.shelf){ui.shelf.ghost.style.left=(x+12)+'px';ui.shelf.ghost.style.top=(y+12)+'px'}}
+document.querySelectorAll('.module').forEach(el=>el.addEventListener('pointerdown',e=>startShelf(el,e)));
+function finishShelf(e,cancel=false){if(!ui.shelf)return;const s=ui.shelf;ui.shelf=null;if(s.ghost?.isConnected)s.ghost.remove();if(cancel){notify('Húzás megszakítva');return}const r=ws.getBoundingClientRect(),inside=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;if(!inside)return;if(s.kind==='layer'){addLayer();return}if(s.kind==='page'){const p=coords(e.clientX,e.clientY,activeLayer().el);addPage(p.x,p.y);return}if(s.kind==='effect'){const el=document.elementFromPoint(e.clientX,e.clientY),dot=el?.closest('.mid');if(!dot){notify('Az effektet egy Path középponti körére húzd');return}const l=state.links.find(x=>x.id===dot.dataset.link);if(l){l.effect=s.effect;draw();record();notify(EFFECTS[s.effect]+' hozzárendelve')}}}
+document.addEventListener('pointermove',e=>{
+ if(ui.shelf){moveGhost(e.clientX,e.clientY);return}
+ if(ui.drag){const l=layer(ui.drag.lid),n=node(ui.drag.lid,ui.drag.nid);if(!l||!n)return;const p=coords(e.clientX,e.clientY,l.el);n.x=Math.max(0,p.x-ui.drag.dx);n.y=Math.max(90,p.y-ui.drag.dy);n.el.style.left=n.x+'px';n.el.style.top=n.y+'px';draw();return}
+ if(ui.connect){ui.connect.cursor=coords(e.clientX,e.clientY,ws);draw();return}
+ if(ui.reroute){ui.reroute.cursor=coords(e.clientX,e.clientY,ws);draw()}
+});
+document.addEventListener('pointerup',e=>{
+ if(ui.shelf){finishShelf(e,false);return}
+ if(ui.drag){const d=ui.drag,n=node(d.lid,d.nid);ui.drag=null;if(n&&(n.x!==d.orig.x||n.y!==d.orig.y))record();return}
+ if(ui.connect){const c=ui.connect;ui.connect=null;const hit=document.elementFromPoint(e.clientX,e.clientY),p=hit?.closest('.port');if(!p){draw();return}const nEl=p.closest('.node'),plane=nEl?.closest('.plane'),lid=plane?.dataset.layerId,nid=nEl?.dataset.nodeId,side=p.dataset.side,port=Number(p.dataset.port);let link=null;if(c.side==='out'&&side==='in')link={fromLayer:c.lid,fromNode:c.nid,fromPort:c.port,toLayer:lid,toNode:nid,toPort:port,effect:null,id:'C'+(Date.now())};else if(c.side==='in'&&side==='out')link={fromLayer:lid,fromNode:nid,fromPort:port,toLayer:c.lid,toNode:c.nid,toPort:c.port,effect:null,id:'C'+(Date.now())};if(link&&!(link.fromLayer===link.toLayer&&link.fromNode===link.toNode)){state.links.push(link);refreshPorts();draw();record();notify(link.fromLayer===link.toLayer?'Path létrehozva':'Rétegek közötti Path létrehozva')}else notify('Kimenetet bemenettel kapcsolj össze');return}
+ if(ui.reroute){const rr=ui.reroute;ui.reroute=null;const hit=document.elementFromPoint(e.clientX,e.clientY),p=hit?.closest('.port'),l=state.links.find(x=>x.id===rr.id);if(p&&l){const nEl=p.closest('.node'),lid=nEl.closest('.plane').dataset.layerId,nid=nEl.dataset.nodeId,side=p.dataset.side,port=Number(p.dataset.port);if(rr.end==='from'&&side==='out'){l.fromLayer=lid;l.fromNode=nid;l.fromPort=port;refreshPorts();record();notify('Kapcsolat áthelyezve')}else if(rr.end==='to'&&side==='in'){l.toLayer=lid;l.toNode=nid;l.toPort=port;refreshPorts();record();notify('Kapcsolat áthelyezve')}else notify('A kapcsolat végét azonos típusú portra húzd')}draw()}
+});
+document.addEventListener('pointercancel',()=>{if(ui.shelf)finishShelf({clientX:-1,clientY:-1},true);ui.drag=null;ui.connect=null;ui.reroute=null;draw()});
+window.addEventListener('blur',()=>{if(ui.shelf)finishShelf({clientX:-1,clientY:-1},true);ui.drag=null;ui.connect=null;ui.reroute=null;draw()});
+svg.addEventListener('pointerdown',e=>{const ep=e.target.closest('.endpoint');if(ep){e.preventDefault();ui.reroute={id:ep.dataset.rewire,end:ep.dataset.end};return}});
+document.getElementById('prev').addEventListener('click',()=>{const i=activeIndex();if(i>0){state.activeLayerId=state.layers[i-1].id;applyLayerView();draw()}});
+document.getElementById('next').addEventListener('click',()=>{const i=activeIndex();if(i<state.layers.length-1){state.activeLayerId=state.layers[i+1].id;applyLayerView();draw()}});
+document.getElementById('deleteLayer').addEventListener('click',()=>{if(state.layers.length<=1){notify('Az utolsó réteg nem törölhető');return}const l=activeLayer();if(confirm(l.name+' törlése? A benne lévő oldalak és kapcsolatok is törlődnek.'))deleteLayer(l.id)});
+window.addEventListener('resize',draw);
+record();render();
 })();
-</script></body></html>
+</script>
+</body></html>
