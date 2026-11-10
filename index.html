@@ -15,7 +15,7 @@ header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 15px;b
 .workspace{position:relative;overflow:hidden;background-color:var(--bg);background-image:radial-gradient(#30465e .85px,transparent .85px);background-size:24px 24px;touch-action:none}
 #layerPlanes{position:absolute;inset:0;pointer-events:none}
 .layer-plane{position:absolute;inset:0;pointer-events:none;transition:opacity .14s}
-.layer-plane.active{opacity:1;z-index:8}.layer-plane.inactive{opacity:.19;z-index:2}
+.layer-plane.active{opacity:1;z-index:100!important;pointer-events:none}.layer-plane.inactive{opacity:.19;z-index:1!important;pointer-events:none}.layer-plane.active .node{pointer-events:auto}.layer-plane.inactive .node{pointer-events:none}
 .plane-frame{position:absolute;inset:22px;border:1px solid #3a526b;border-radius:10px;pointer-events:none}
 .plane-caption{position:absolute;top:29px;left:34px;color:#91a9c2;font-size:9px;letter-spacing:.1em}
 .node{position:absolute;width:218px;min-height:118px;border:1px solid #6684a3;border-radius:10px;background:#1b2b3b;box-shadow:0 8px 24px #0005;pointer-events:auto;user-select:none}
@@ -135,6 +135,9 @@ function hasPair(a,b,exceptId=null){return state.links.some(l=>l.id!==exceptId&&
 function connect(source,target){
  let out=source.side==='out'?source:target,inport=source.side==='in'?source:target;
  if(out.side!=='out'||inport.side!=='in'){say('Kimenetet bemenettel kapcsolj össze');return}
+ // The drop endpoint must belong to the currently active layer. Cross-layer
+ // connections are therefore explicit: SHIFT+Arrow changes the target layer.
+ if(getNodeLayer(target.id)?.id!==state.activeLayerId){say('Rétegközi bekötéshez válts a célrétegre SHIFT + nyíllal');return}
  if(out.id===inport.id){say('Egy oldal önmagához nem kapcsolható');return}
  if(hasPair(out.id,inport.id)){say('Ez az oldal-pár már össze van kötve');return}
  if(portUsed(out.id,'out',out.index)||portUsed(inport.id,'in',inport.index)){say('A kiválasztott port foglalt');return}
@@ -144,12 +147,12 @@ function connect(source,target){
 function beginPort(id,side,index,e){
  e.preventDefault();e.stopPropagation();
  let existing=state.links.find(l=>side==='out'?l.from===id&&l.fromPort===index:l.to===id&&l.toPort===index);
- gesture.connection=existing?{mode:'move',linkId:existing.id,dragSide:side,source:{id,side,index},cursor:localPoint(e.clientX,e.clientY)}:{mode:'new',source:{id,side,index},cursor:localPoint(e.clientX,e.clientY)};
+ gesture.connection=existing?{mode:'move',linkId:existing.id,dragSide:side,source:{id,side,index},cursor:localPoint(e.clientX,e.clientY),pointerId:e.pointerId}:{mode:'new',source:{id,side,index},cursor:localPoint(e.clientX,e.clientY),pointerId:e.pointerId};
  drawLinks()
 }
 function finishPort(e){
  let g=gesture.connection;gesture.connection=null;
- let el=document.elementFromPoint(e.clientX,e.clientY)?.closest('.port');
+ let el=document.elementsFromPoint(e.clientX,e.clientY).map(x=>x.closest?.('.port')).find(Boolean);
  if(!el){drawLinks();return}
  let target={id:el.dataset.id,side:el.dataset.side,index:+el.dataset.index};
  if(g.mode==='new'){connect(g.source,target);return}
@@ -169,16 +172,33 @@ document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target)&&!e.targ
 function obstacleRects(layerIds,excludeIds){let out=[];for(const id of layerIds){let l=getLayer(id);if(!l)continue;for(const n of l.nodes){if(excludeIds.includes(n.id))continue;let r=nodeRect(n);out.push({left:r.x-17,right:r.x+r.w+17,top:r.y-17,bottom:r.y+r.h+17})}}return out}
 function cubicPoint(a,b,c,d,t){let u=1-t;return{x:u*u*u*a.x+3*u*u*t*b.x+3*u*t*t*c.x+t*t*t*d.x,y:u*u*u*a.y+3*u*u*t*b.y+3*u*t*t*c.y+t*t*t*d.y}}
 function makeCurve(a,b,layerIds,excludeIds){
- let dx=b.x-a.x,dy=b.y-a.y,dir=dx>=0?1:-1,handle=Math.max(58,Math.min(220,Math.abs(dx)*.42)),obstacles=obstacleRects(layerIds,excludeIds);
- let offsets=[-38,38,-78,78,-122,122,-172,172,-230,230,-295,295],best=null;
- for(let off of offsets){
-  let p0=a,p3=b,p1={x:a.x+dir*handle,y:a.y+off},p2={x:b.x-dir*handle,y:b.y+off};
+ const obstacles=obstacleRects(layerIds,excludeIds);
+ const minTop=obstacles.length?Math.min(...obstacles.map(r=>r.top)):Math.min(a.y,b.y)-120;
+ const maxBottom=obstacles.length?Math.max(...obstacles.map(r=>r.bottom)):Math.max(a.y,b.y)+120;
+ const base=[minTop-72,maxBottom+72,Math.min(a.y,b.y)-150,Math.max(a.y,b.y)+150];
+ // Include lanes around each obstacle; deterministic order makes routing repeatable.
+ for(const r of obstacles){base.push(r.top-54,r.bottom+54)}
+ const lanes=[...new Set(base.map(v=>Math.round(v)))];
+ const dx=Math.abs(b.x-a.x),handle=Math.max(62,Math.min(260,dx*.42));
+ let best=null;
+ for(const lane of lanes){
+  const p0=a,p3=b;
+  // Ports always face outward: source exits right, target is approached from left.
+  const p1={x:a.x+handle,y:lane},p2={x:b.x-handle,y:lane};
   let hits=0,near=0;
-  for(let i=1;i<45;i++){let p=cubicPoint(p0,p1,p2,p3,i/45);for(let r of obstacles){if(p.x>r.left&&p.x<r.right&&p.y>r.top&&p.y<r.bottom)hits++;else if(p.x>r.left-14&&p.x<r.right+14&&p.y>r.top-14&&p.y<r.bottom+14)near+=.12}}
-  let score=hits*10000+near*18+Math.abs(off)*.12+Math.abs(off)*.003;
-  if(!best||score<best.score)best={score,p0,p1,p2,p3}
+  for(let i=1;i<100;i++){
+   const p=cubicPoint(p0,p1,p2,p3,i/100);
+   for(const r of obstacles){
+    if(p.x>r.left&&p.x<r.right&&p.y>r.top&&p.y<r.bottom)hits++;
+    else if(p.x>r.left-12&&p.x<r.right+12&&p.y>r.top-12&&p.y<r.bottom+12)near+=.08;
+   }
+  }
+  const score=hits*100000+near*100+Math.abs(lane-(a.y+b.y)/2)*.03;
+  if(!best||score<best.score)best={score,p0,p1,p2,p3,lane};
  }
- let q=best;return `M ${q.p0.x} ${q.p0.y} C ${q.p1.x} ${q.p1.y}, ${q.p2.x} ${q.p2.y}, ${q.p3.x} ${q.p3.y}`
+ if(!best)return `M ${a.x} ${a.y} C ${a.x+70} ${a.y}, ${b.x-70} ${b.y}, ${b.x} ${b.y}`;
+ const q=best;
+ return `M ${q.p0.x} ${q.p0.y} C ${q.p1.x} ${q.p1.y}, ${q.p2.x} ${q.p2.y}, ${q.p3.x} ${q.p3.y}`;
 }
 function drawLinks(){
  let r=ws.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);svg.innerHTML='';
@@ -233,9 +253,16 @@ document.addEventListener('pointerup',e=>{
  if(gesture.node){let g=gesture.node;gesture.node=null;let n=getNode(g.id);if(n&&(n.x!==g.startX||n.y!==g.startY))commit();drawLinks();return}
  if(gesture.connection)finishPort(e)
 });
-document.addEventListener('keydown',e=>{
- if(gesture.connection&&e.shiftKey&&(e.key==='ArrowRight'||e.key==='ArrowLeft')){e.preventDefault();switchLayer(e.key==='ArrowRight'?1:-1);gesture.connection.cursor ||= {x:ws.clientWidth/2,y:ws.clientHeight/2};drawLinks()}
-});
+window.addEventListener('keydown',e=>{
+ if(gesture.connection && e.shiftKey && (e.key==='ArrowRight'||e.key==='ArrowLeft')){
+  e.preventDefault();e.stopPropagation();
+  const before=state.activeLayerId;
+  switchLayer(e.key==='ArrowRight'?1:-1);
+  if(before!==state.activeLayerId)say(`Célréteg: ${getLayer(state.activeLayerId).name} · engedd el a porton`);
+  if(!gesture.connection.cursor)gesture.connection.cursor={x:ws.clientWidth/2,y:ws.clientHeight/2};
+  drawLinks();
+ }
+},true);
 window.addEventListener('pointercancel',()=>{cancelTransient();render()});
 window.addEventListener('blur',()=>{cancelTransient();render()});
 window.addEventListener('resize',drawLinks);
