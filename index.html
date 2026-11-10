@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NEWWORLD DESIGNER 3.0</title>
+<title>NEWWORLD DESIGNER 3.2</title>
 <style>
 :root{--bg:#0d1723;--panel:#182838;--panel2:#23394e;--line:#405a74;--text:#e8f0fa;--muted:#91a8c1;--blue:#80bdff;--gold:#f2c66f;--violet:#c7a4ff}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:13px "Segoe UI",Arial,sans-serif}
@@ -15,7 +15,7 @@ header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 15px;b
 .workspace{position:relative;overflow:hidden;background-color:var(--bg);background-image:radial-gradient(#30465e .85px,transparent .85px);background-size:24px 24px;touch-action:none}
 #layerPlanes{position:absolute;inset:0;pointer-events:none}
 .layer-plane{position:absolute;inset:0;pointer-events:none;transition:opacity .14s}
-.layer-plane.active{opacity:1;z-index:100!important;pointer-events:none}.layer-plane.inactive{opacity:.19;z-index:1!important;pointer-events:none}.layer-plane.active .node{pointer-events:auto}.layer-plane.inactive .node{pointer-events:none}
+.layer-plane.active{opacity:1;z-index:20!important;pointer-events:none}.layer-plane.inactive{opacity:.19;z-index:10!important;pointer-events:none}.layer-plane.active .node{pointer-events:auto}.layer-plane.inactive .node{pointer-events:none}
 .plane-frame{position:absolute;inset:22px;border:1px solid #3a526b;border-radius:10px;pointer-events:none}
 .plane-caption{position:absolute;top:29px;left:34px;color:#91a9c2;font-size:9px;letter-spacing:.1em}
 .node{position:absolute;width:218px;min-height:118px;border:1px solid #6684a3;border-radius:10px;background:#1b2b3b;box-shadow:0 8px 24px #0005;pointer-events:auto;user-select:none}
@@ -27,7 +27,7 @@ header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 15px;b
 .port{position:absolute;width:15px;height:15px;transform:translateY(-50%);border:2px solid var(--gold);border-radius:50%;background:#142231;box-shadow:0 0 0 2px #101b27;z-index:10;cursor:crosshair}
 .port.out{border-color:var(--blue)}.port:hover{filter:brightness(1.3);scale:1.12}.port.used:after{content:"";position:absolute;inset:3px;background:currentColor;border-radius:50%;opacity:.65}
 .layer-plane.inactive .node-head{pointer-events:none}.layer-plane.inactive .remove{pointer-events:none}
-#links{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:12;pointer-events:none}
+#links{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:2;pointer-events:none}
 .path{fill:none;stroke:#83bcff;stroke-width:2.35;stroke-linecap:round;stroke-linejoin:round;pointer-events:stroke;cursor:pointer}
 .path.cross{stroke:#c7a3ff;stroke-dasharray:7 5}.path.dim{opacity:.18}.path.preview{stroke:var(--gold);stroke-dasharray:6 5;pointer-events:none}
 .path-point{fill:var(--gold);stroke:#152231;stroke-width:2;cursor:pointer;pointer-events:all}
@@ -56,7 +56,7 @@ header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 15px;b
 <body>
 <div class="app">
 <header>
- <div class="brand">NEWWORLD DESIGNER</div><div class="version">3.0 · modular graph foundation</div>
+ <div class="brand">NEWWORLD DESIGNER</div><div class="version">3.2 · routing & connection editing</div>
  <div class="toolbar"><button class="btn" id="undo" disabled>↶ Undo</button><button class="btn" id="redo" disabled>↷ Redo</button></div>
  <div class="hint">LAYERED NODE WORKSPACE · MODULAR GRAPH</div>
 </header>
@@ -86,7 +86,7 @@ header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 15px;b
  <button data-effect="left">Flip · Balra</button><button data-effect="right">Flip · Jobbra</button>
  <button data-effect="up">Flip · Felfelé</button><button data-effect="down">Flip · Lefelé</button>
  <button data-effect="depthIn">Flip · Mélységbe</button><button data-effect="depthOut">Flip · Mélységből</button>
- <button data-effect="none">Effekt eltávolítása</button>
+ <button data-effect="none">Effekt eltávolítása</button><button data-action="delete-link">Kapcsolat törlése</button>
 </div>
 <div id="shade"><div class="dialog"><h3 id="dialogTitle">Megerősítés</h3><p id="dialogText"></p><div class="dialog-actions"><button class="btn" id="cancel">Mégse</button><button class="btn" id="confirm">Törlés</button></div></div></div>
 <script>
@@ -150,14 +150,27 @@ function beginPort(id,side,index,e){
  gesture.connection=existing?{mode:'move',linkId:existing.id,dragSide:side,source:{id,side,index},cursor:localPoint(e.clientX,e.clientY),pointerId:e.pointerId}:{mode:'new',source:{id,side,index},cursor:localPoint(e.clientX,e.clientY),pointerId:e.pointerId};
  drawLinks()
 }
+function findPortAt(clientX,clientY){
+ // Hit-test only the active layer's real port elements. This avoids selecting
+ // an SVG path, a translucent inactive node, or a decorative overlay first.
+ let candidates=[...ws.querySelectorAll('.layer-plane.active .port')],best=null,bestD=Infinity;
+ for(const el of candidates){
+  const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const d=Math.hypot(clientX-cx,clientY-cy);
+  if(d<=19&&d<bestD){best=el;bestD=d}
+ }
+ return best;
+}
 function finishPort(e){
  let g=gesture.connection;gesture.connection=null;
- let el=document.elementsFromPoint(e.clientX,e.clientY).map(x=>x.closest?.('.port')).find(Boolean);
+ let el=findPortAt(e.clientX,e.clientY);
  if(!el){drawLinks();return}
  let target={id:el.dataset.id,side:el.dataset.side,index:+el.dataset.index};
  if(g.mode==='new'){connect(g.source,target);return}
  let l=getLink(g.linkId);if(!l)return;
  if(target.side!==g.dragSide){say('A kapcsolat végét azonos típusú szabad portra húzd');drawLinks();return}
+ const sameEndpoint=g.dragSide==='out'?(target.id===l.from&&target.index===l.fromPort):(target.id===l.to&&target.index===l.toPort);
+ if(sameEndpoint){drawLinks();return}
  let other=g.dragSide==='out'?l.to:l.from;
  if(target.id===other||hasPair(target.id,other,l.id)||portUsed(target.id,target.side,target.index)){say('Ez a célport nem használható');drawLinks();return}
  if(g.dragSide==='out'){l.from=target.id;l.fromPort=target.index}else{l.to=target.id;l.toPort=target.index}
@@ -165,40 +178,113 @@ function finishPort(e){
 }
 function setEffect(id,effect){let l=getLink(id);if(!l)return;l.effect=effect==='none'?null:effect;menu.style.display='none';render();commit();say(effect==='none'?'Effekt eltávolítva':`${EFFECT[effect]} hozzáadva`)}
 function openEffectMenu(id,x,y){gesture.menuLinkId=id;menu.style.left=`${Math.min(x,innerWidth-195)}px`;menu.style.top=`${Math.min(y,innerHeight-250)}px`;menu.style.display='block'}
-menu.addEventListener('click',e=>{let b=e.target.closest('[data-effect]');if(b&&gesture.menuLinkId)setEffect(gesture.menuLinkId,b.dataset.effect)});
+function deleteLink(id){
+ const i=state.links.findIndex(l=>l.id===id);if(i<0)return;
+ state.links.splice(i,1);normalizePorts();menu.style.display='none';render();commit();say('Path törölve');
+}
+menu.addEventListener('click',e=>{
+ let action=e.target.closest('[data-action]');
+ if(action&&action.dataset.action==='delete-link'&&gesture.menuLinkId){deleteLink(gesture.menuLinkId);return}
+ let b=e.target.closest('[data-effect]');if(b&&gesture.menuLinkId)setEffect(gesture.menuLinkId,b.dataset.effect)
+});
 document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target)&&!e.target.closest('.path-point'))menu.style.display='none'});
-/* Deterministic cubic-Bezier router. It evaluates smooth curve candidates and
-   chooses the one with the fewest obstacle intersections. */
-function obstacleRects(layerIds,excludeIds){let out=[];for(const id of layerIds){let l=getLayer(id);if(!l)continue;for(const n of l.nodes){if(excludeIds.includes(n.id))continue;let r=nodeRect(n);out.push({left:r.x-17,right:r.x+r.w+17,top:r.y-17,bottom:r.y+r.h+17})}}return out}
-function cubicPoint(a,b,c,d,t){let u=1-t;return{x:u*u*u*a.x+3*u*u*t*b.x+3*u*t*t*c.x+t*t*t*d.x,y:u*u*u*a.y+3*u*u*t*b.y+3*u*t*t*c.y+t*t*t*d.y}}
-function makeCurve(a,b,layerIds,excludeIds){
- const obstacles=obstacleRects(layerIds,excludeIds);
- const minTop=obstacles.length?Math.min(...obstacles.map(r=>r.top)):Math.min(a.y,b.y)-120;
- const maxBottom=obstacles.length?Math.max(...obstacles.map(r=>r.bottom)):Math.max(a.y,b.y)+120;
- const base=[minTop-72,maxBottom+72,Math.min(a.y,b.y)-150,Math.max(a.y,b.y)+150];
- // Include lanes around each obstacle; deterministic order makes routing repeatable.
- for(const r of obstacles){base.push(r.top-54,r.bottom+54)}
- const lanes=[...new Set(base.map(v=>Math.round(v)))];
- const dx=Math.abs(b.x-a.x),handle=Math.max(62,Math.min(260,dx*.42));
- let best=null;
- for(const lane of lanes){
-  const p0=a,p3=b;
-  // Ports always face outward: source exits right, target is approached from left.
-  const p1={x:a.x+handle,y:lane},p2={x:b.x-handle,y:lane};
-  let hits=0,near=0;
-  for(let i=1;i<100;i++){
-   const p=cubicPoint(p0,p1,p2,p3,i/100);
-   for(const r of obstacles){
-    if(p.x>r.left&&p.x<r.right&&p.y>r.top&&p.y<r.bottom)hits++;
-    else if(p.x>r.left-12&&p.x<r.right+12&&p.y>r.top-12&&p.y<r.bottom+12)near+=.08;
-   }
+/* Deterministic obstacle-avoiding router.
+   A visibility grid routes around padded node rectangles. The resulting
+   polyline is rendered with rounded quadratic corners, so the route stays
+   clear of nodes without the old arbitrary Bézier lane guesses. */
+function obstacleRects(layerIds,excludeIds){
+ let out=[];
+ for(const id of layerIds){
+  let l=getLayer(id);if(!l)continue;
+  for(const n of l.nodes){
+   if(excludeIds.includes(n.id))continue;
+   let r=nodeRect(n);
+   out.push({left:r.x-22,right:r.x+r.w+22,top:r.y-22,bottom:r.y+r.h+22});
   }
-  const score=hits*100000+near*100+Math.abs(lane-(a.y+b.y)/2)*.03;
-  if(!best||score<best.score)best={score,p0,p1,p2,p3,lane};
  }
- if(!best)return `M ${a.x} ${a.y} C ${a.x+70} ${a.y}, ${b.x-70} ${b.y}, ${b.x} ${b.y}`;
- const q=best;
- return `M ${q.p0.x} ${q.p0.y} C ${q.p1.x} ${q.p1.y}, ${q.p2.x} ${q.p2.y}, ${q.p3.x} ${q.p3.y}`;
+ return out;
+}
+function pointInside(p,rs){
+ return rs.some(r=>p.x>r.left+0.5&&p.x<r.right-0.5&&p.y>r.top+0.5&&p.y<r.bottom-0.5);
+}
+function segmentClear(a,b,rs){
+ // All visibility-grid edges are axis aligned.
+ let mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+ if(pointInside(mid,rs))return false;
+ for(const r of rs){
+  if(Math.abs(a.y-b.y)<.01){
+   if(a.y>r.top+.5&&a.y<r.bottom-.5&&Math.max(Math.min(a.x,b.x),r.left)<Math.min(Math.max(a.x,b.x),r.right)-.5)return false;
+  }else if(Math.abs(a.x-b.x)<.01){
+   if(a.x>r.left+.5&&a.x<r.right-.5&&Math.max(Math.min(a.y,b.y),r.top)<Math.min(Math.max(a.y,b.y),r.bottom)-.5)return false;
+  }
+ }
+ return true;
+}
+function routePoints(a,b,layerIds,excludeIds){
+ const rs=obstacleRects(layerIds,excludeIds);
+ const xs=[a.x,b.x],ys=[a.y,b.y];
+ for(const r of rs){xs.push(r.left,r.right);ys.push(r.top,r.bottom)}
+ const margin=72;
+ xs.push(Math.min(a.x,b.x,...rs.map(r=>r.left))-margin,Math.max(a.x,b.x,...rs.map(r=>r.right))+margin);
+ ys.push(Math.min(a.y,b.y,...rs.map(r=>r.top))-margin,Math.max(a.y,b.y,...rs.map(r=>r.bottom))+margin);
+ const uniq=v=>[...new Set(v.map(x=>Math.round(x*10)/10))].sort((x,y)=>x-y);
+ const X=uniq(xs),Y=uniq(ys),nx=X.length,ny=Y.length;
+ const id=(i,j)=>i*ny+j, coords=k=>({x:X[Math.floor(k/ny)],y:Y[k%ny]});
+ let start=id(X.indexOf(Math.round(a.x*10)/10),Y.indexOf(Math.round(a.y*10)/10));
+ let goal=id(X.indexOf(Math.round(b.x*10)/10),Y.indexOf(Math.round(b.y*10)/10));
+ const valid=new Set();
+ for(let i=0;i<nx;i++)for(let j=0;j<ny;j++){let k=id(i,j);if(!pointInside(coords(k),rs)||k===start||k===goal)valid.add(k)}
+ if(!valid.has(start)||!valid.has(goal))return null;
+ const dirs=[[-1,0,'h'],[1,0,'h'],[0,-1,'v'],[0,1,'v']];
+ const key=(k,d)=>`${k}|${d}`;
+ let dist=new Map([[key(start,'0'),0]]),prev=new Map(),open=[{k:start,d:'0',g:0}],best=null;
+ while(open.length){
+  open.sort((u,v)=>u.g-v.g);
+  const cur=open.shift(),ck=key(cur.k,cur.d);
+  if(cur.g!==dist.get(ck))continue;
+  if(cur.k===goal){best=ck;break}
+  const i=Math.floor(cur.k/ny),j=cur.k%ny,p=coords(cur.k);
+  for(const [di,dj,dir] of dirs){
+   const ii=i+di,jj=j+dj;if(ii<0||ii>=nx||jj<0||jj>=ny)continue;
+   const nk=id(ii,jj);if(!valid.has(nk))continue;
+   const q=coords(nk);if(!segmentClear(p,q,rs))continue;
+   const cost=Math.abs(q.x-p.x)+Math.abs(q.y-p.y)+(cur.d!=='0'&&cur.d!==dir?95:0);
+   const ng=cur.g+cost,nkey=key(nk,dir);
+   if(ng<(dist.get(nkey)??Infinity)){dist.set(nkey,ng);prev.set(nkey,ck);open.push({k:nk,d:dir,g:ng})}
+  }
+ }
+ if(!best)return null;
+ let ids=[best];while(prev.has(ids[ids.length-1]))ids.push(prev.get(ids[ids.length-1]));ids.reverse();
+ let pts=ids.map(k=>coords(Number(k.split('|')[0])));
+ // Remove collinear intermediate points.
+ let simple=[];
+ for(const p of pts){if(simple.length>=2){let u=simple[simple.length-2],v=simple[simple.length-1];if((Math.abs(u.x-v.x)<.1&&Math.abs(v.x-p.x)<.1)||(Math.abs(u.y-v.y)<.1&&Math.abs(v.y-p.y)<.1)){simple[simple.length-1]=p;continue}}simple.push(p)}
+ return simple;
+}
+function roundedRoutePath(points){
+ if(!points||points.length<2)return '';
+ let d=`M ${points[0].x} ${points[0].y}`,radius=25;
+ for(let i=1;i<points.length-1;i++){
+  const a=points[i-1],p=points[i],b=points[i+1];
+  const d1=Math.hypot(p.x-a.x,p.y-a.y),d2=Math.hypot(b.x-p.x,b.y-p.y);
+  const r=Math.min(radius,d1*.42,d2*.42);
+  const before={x:p.x+(a.x-p.x)/d1*r,y:p.y+(a.y-p.y)/d1*r};
+  const after={x:p.x+(b.x-p.x)/d2*r,y:p.y+(b.y-p.y)/d2*r};
+  d+=` L ${before.x} ${before.y} Q ${p.x} ${p.y} ${after.x} ${after.y}`;
+ }
+ const last=points[points.length-1];d+=` L ${last.x} ${last.y}`;return d;
+}
+function makeCurve(a,b,layerIds,excludeIds){
+ const points=routePoints(a,b,layerIds,excludeIds);
+ if(points)return roundedRoutePath(points);
+ // If the visibility grid cannot find a route, try a deterministic outer lane.
+ const rs=obstacleRects(layerIds,excludeIds);
+ const top=Math.min(a.y,b.y,...rs.map(r=>r.top))-100;
+ const bottom=Math.max(a.y,b.y,...rs.map(r=>r.bottom))+100;
+ const lanes=[top,bottom];
+ let lane=lanes[0],score=Infinity;
+ for(const y of lanes){let hits=0;for(let i=1;i<80;i++){let t=i/80,p={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t+(y-(a.y+b.y)/2)*Math.sin(Math.PI*t)};if(pointInside(p,rs))hits++}if(hits<score){score=hits;lane=y}}
+ return `M ${a.x} ${a.y} C ${a.x+70} ${a.y}, ${a.x+70} ${lane}, ${(a.x+b.x)/2} ${lane} S ${b.x-70} ${b.y}, ${b.x} ${b.y}`;
 }
 function drawLinks(){
  let r=ws.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);svg.innerHTML='';
