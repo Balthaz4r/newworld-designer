@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEWWORLD DESIGNER 3.2</title>
+<style>
+:root{--bg:#0d1723;--panel:#182838;--panel2:#23394e;--line:#405a74;--text:#e8f0fa;--muted:#91a8c1;--blue:#80bdff;--gold:#f2c66f;--violet:#c7a4ff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:13px "Segoe UI",Arial,sans-serif}
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 270px;grid-template-rows:52px 1fr}
+header{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 15px;background:#142130;border-bottom:1px solid #30465d;z-index:40}
+.brand{font-weight:850;letter-spacing:.07em}.version{font-size:10px;color:#9bb1c8}.toolbar{display:flex;gap:6px;margin-left:12px}
+.btn{border:1px solid #435e79;border-radius:7px;background:#21364b;color:#e4eef9;padding:7px 10px;font-size:11px;cursor:pointer}.btn:hover:not(:disabled){border-color:var(--blue);background:#2b4660}.btn:disabled{opacity:.35;cursor:default}
+.hint{margin-left:auto;color:#8299b2;font-size:10px;letter-spacing:.06em}
+.workspace{position:relative;overflow:hidden;background-color:var(--bg);background-image:radial-gradient(#30465e .85px,transparent .85px);background-size:24px 24px;touch-action:none}
+#layerPlanes{position:absolute;inset:0;pointer-events:none}
+.layer-plane{position:absolute;inset:0;pointer-events:none;transition:opacity .14s}
+.layer-plane.active{opacity:1;z-index:20!important;pointer-events:none}.layer-plane.inactive{opacity:.19;z-index:10!important;pointer-events:none}.layer-plane.active .node{pointer-events:auto}.layer-plane.inactive .node{pointer-events:none}
+.plane-frame{position:absolute;inset:22px;border:1px solid #3a526b;border-radius:10px;pointer-events:none}
+.plane-caption{display:none}
+.node{position:absolute;width:218px;min-height:118px;border:1px solid #6684a3;border-radius:10px;background:#1b2b3b;box-shadow:0 8px 24px #0005;pointer-events:auto;user-select:none}
+.node.selected{outline:2px solid var(--blue);outline-offset:2px}
+.node-head{height:39px;display:flex;align-items:center;gap:8px;padding:0 9px 0 12px;background:#24394e;border-bottom:1px solid #3b546d;border-radius:9px 9px 0 0;cursor:grab;touch-action:none}
+.node-head:active{cursor:grabbing}.kind{font-size:9px;color:#aecbea;font-weight:850;letter-spacing:.09em}.node-title{font-size:12px;font-weight:750;flex:1}.node-id{font-size:9px;color:#8fa8c1}
+.remove{border:0;background:transparent;color:#9db1c5;font-size:17px;cursor:pointer;width:20px;height:22px;border-radius:4px}.remove:hover{background:#60404b;color:#fff}
+.node-body{height:40px;padding:10px 13px 0;font-size:11px;color:#d3deea}.node-foot{padding:0 13px 11px;color:#8da4bd;font-size:10px}
+.port{position:absolute;width:15px;height:15px;transform:translateY(-50%);border:2px solid var(--gold);border-radius:50%;background:#142231;box-shadow:0 0 0 2px #101b27;z-index:10;cursor:crosshair}
+.port.out{border-color:var(--blue)}.port:hover{filter:brightness(1.3);scale:1.12}.port.used:after{content:"";position:absolute;inset:3px;background:currentColor;border-radius:50%;opacity:.65}
+.layer-plane.inactive .node-head{pointer-events:none}.layer-plane.inactive .remove{pointer-events:none}
+#links{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:2;pointer-events:none}
+.path{fill:none;stroke:#83bcff;stroke-width:2.35;stroke-linecap:round;stroke-linejoin:round;pointer-events:stroke;cursor:pointer}
+.path.cross{stroke:#c7a3ff;stroke-dasharray:7 5}.path.warning{stroke:#ff9a76;stroke-dasharray:5 5}.path.dim{opacity:.18}.path.preview{stroke:var(--gold);stroke-dasharray:6 5;pointer-events:none}
+.path-point{fill:var(--gold);stroke:#152231;stroke-width:2;cursor:pointer;pointer-events:all}
+.path-point.has-effect{fill:#d5baff;stroke:#392c4c}.path-label{font-size:9px;fill:#dfccff;pointer-events:none}
+.layer-tabs{position:absolute;top:13px;left:14px;right:14px;z-index:25;display:flex;align-items:center;gap:5px;min-height:42px;padding:5px 7px;border:1px solid #405a74;border-radius:9px;background:#192a3b;box-shadow:0 8px 22px #0005;overflow-x:auto;scrollbar-width:thin}
+.layer-tab{flex:none;border:1px solid transparent;border-radius:6px;padding:8px 11px;background:transparent;color:#9fb4c9;font-size:10px;font-weight:750;cursor:pointer;white-space:nowrap}
+.layer-tab:hover{background:#2b4056;color:#e5eef8}.layer-tab.active{background:#2b4660;border-color:#82baff;color:#fff;box-shadow:inset 0 0 0 1px #42698e}
+.layer-tab .count{margin-left:6px;color:#9bb1c8;font-weight:500}
+.shelf{background:#172535;border-left:1px solid #30465d;padding:15px 13px;overflow:auto;z-index:35}
+.shelf h2{margin:3px 0 11px;font-size:11px;letter-spacing:.11em;color:#b6c7d9}
+.module{display:flex;align-items:center;gap:10px;padding:9px;margin-bottom:8px;border:1px solid #435d78;border-radius:9px;background:#20364b;cursor:grab;touch-action:none;user-select:none}
+.module:active{cursor:grabbing}.module-icon{width:29px;height:29px;display:grid;place-items:center;flex:none;border-radius:7px;background:#2c4b68;color:#c1e0ff;font-size:17px;font-weight:800}
+.module strong{display:block;font-size:11px}.module small{display:block;margin-top:2px;font-size:9px;color:#95adc5}
+.module.effect{background:#2a263b;border-color:#675281}.module.effect .module-icon{background:#4a3963;color:#e0cbff}
+.note{font-size:10px;line-height:1.5;color:#829ab3;margin:10px 1px 14px}.sep{height:1px;background:#344a61;margin:15px 0}
+#empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#849ab2;pointer-events:none}
+#empty strong{display:block;color:#b8c9dc;font-size:15px;margin-bottom:6px}#empty span{font-size:11px}
+#ghost{position:fixed;z-index:1000;display:none;pointer-events:none;padding:10px 13px;border:1px solid var(--blue);border-radius:8px;background:#263d54;box-shadow:0 12px 28px #0009;font-weight:750}
+#toast{position:absolute;left:15px;bottom:14px;z-index:50;padding:8px 11px;border:1px solid #405a74;border-radius:7px;background:#1d3044;color:#d2e0ef;font-size:10px;opacity:0;pointer-events:none;transition:opacity .15s}#toast.show{opacity:1}
+#menu{position:fixed;z-index:80;display:none;min-width:185px;padding:7px;border:1px solid #715c90;border-radius:9px;background:#1c2b3d;box-shadow:0 12px 35px #0009}
+#menu button{display:block;width:100%;padding:7px 9px;border:0;border-radius:5px;background:transparent;color:#e5dcf2;text-align:left;font-size:11px;cursor:pointer}#menu button:hover{background:#3d3151}
+#shade{position:fixed;inset:0;z-index:90;display:none;place-items:center;background:#050a10aa}.dialog{width:min(390px,calc(100vw - 32px));padding:17px;border:1px solid #526b86;border-radius:12px;background:#1b2b3d;box-shadow:0 20px 60px #000b}.dialog h3{margin:0 0 8px;font-size:14px}.dialog p{margin:0 0 17px;color:#a9bbcf;font-size:11px;line-height:1.5}.dialog-actions{display:flex;justify-content:flex-end;gap:8px}
+@media(max-width:760px){.app{grid-template-columns:minmax(0,1fr) 205px}.hint{display:none}.shelf{padding:12px 8px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+ <div class="brand">NEWWORLD DESIGNER</div><div class="version">3.2 · routing & connection editing</div>
+ <div class="toolbar"><button class="btn" id="undo" disabled>↶ Undo</button><button class="btn" id="redo" disabled>↷ Redo</button></div>
+ <div class="hint">LAYERED NODE WORKSPACE · MODULAR GRAPH</div>
+</header>
+<main class="workspace" id="workspace" tabindex="0">
+ <svg id="links"></svg><div id="layerPlanes"></div>
+ <div class="layer-tabs" id="layerTabs"></div>
+ <div id="empty"><div><strong>Üres munkaterület</strong><span>Húzd be jobbról az Oldal modult.</span></div></div>
+ <div id="toast"></div>
+</main>
+<aside class="shelf">
+ <h2>VILÁG MODULOK</h2>
+ <div class="module" data-kind="page"><div class="module-icon">▱</div><div><strong>Oldal</strong><small>Üres, alakítható oldalnode</small></div></div>
+ <div class="module" data-kind="layer"><div class="module-icon">▤</div><div><strong>Új réteg</strong><small>Az aktív réteg mögé</small></div></div>
+ <div class="note">Az oldal később képet, videót, GIF-et, HUD-elemet és további funkciókat fogadhat.</div>
+ <div class="sep"></div><h2>EFFEKTEK · FLIP</h2>
+ <div class="module effect" data-kind="effect" data-effect="left"><div class="module-icon">↶</div><div><strong>Flip · Balra</strong><small>Balra forduló átmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="right"><div class="module-icon">↷</div><div><strong>Flip · Jobbra</strong><small>Jobbra forduló átmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="up"><div class="module-icon">↟</div><div><strong>Flip · Felfelé</strong><small>Felfelé forduló átmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="down"><div class="module-icon">↡</div><div><strong>Flip · Lefelé</strong><small>Lefelé forduló átmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="depthIn"><div class="module-icon">⤢</div><div><strong>Flip · Mélységbe</strong><small>Hátrafelé forduló átmenet</small></div></div>
+ <div class="module effect" data-kind="effect" data-effect="depthOut"><div class="module-icon">⤡</div><div><strong>Flip · Mélységből</strong><small>Előrefelé forduló átmenet</small></div></div>
+ <div class="note">Az effektet húzd a Path középpontjára, vagy kattints a középpontjára a hozzárendeléshez.</div>
+</aside>
+</div>
+<div id="ghost"></div>
+<div id="menu">
+ <button data-effect="left">Flip · Balra</button><button data-effect="right">Flip · Jobbra</button>
+ <button data-effect="up">Flip · Felfelé</button><button data-effect="down">Flip · Lefelé</button>
+ <button data-effect="depthIn">Flip · Mélységbe</button><button data-effect="depthOut">Flip · Mélységből</button>
+ <button data-effect="none">Effekt eltávolítása</button><button data-action="delete-link">Kapcsolat törlése</button>
+</div>
+<div id="shade"><div class="dialog"><h3 id="dialogTitle">Megerősítés</h3><p id="dialogText"></p><div class="dialog-actions"><button class="btn" id="cancel">Mégse</button><button class="btn" id="confirm">Törlés</button></div></div></div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),ws=$('workspace'),planes=$('layerPlanes'),svg=$('links'),tabs=$('layerTabs'),ghost=$('ghost'),toast=$('toast'),menu=$('menu'),NS='http://www.w3.org/2000/svg';
+const NODE_W=218,PORT_GAP=24;
+const EFFECT={left:'Flip · Balra',right:'Flip · Jobbra',up:'Flip · Felfelé',down:'Flip · Lefelé',depthIn:'Flip · Mélységbe',depthOut:'Flip · Mélységből'};
+const initial=()=>({layers:[{id:'layer_1',name:'Réteg 1',nodes:[]}],links:[],activeLayerId:'layer_1',nextLayer:2,nextNode:1,nextLink:1});
+let state=initial(),history=[],historyIndex=-1,gesture={},toastTimer=null;
+const clone=x=>JSON.parse(JSON.stringify(x));
+function snapshot(){return JSON.stringify(state)}
+function commit(){let s=snapshot();if(history[historyIndex]===s)return;history=history.slice(0,historyIndex+1);history.push(s);if(history.length>150)history.shift();historyIndex=history.length-1;updateHistoryButtons()}
+function updateHistoryButtons(){$('undo').disabled=historyIndex<=0;$('redo').disabled=historyIndex>=history.length-1}
+function restore(i){if(i<0||i>=history.length)return;state=JSON.parse(history[i]);historyIndex=i;cancelTransient();render();updateHistoryButtons()}
+function undo(){if(historyIndex>0){restore(historyIndex-1);say('Visszavonva')}}
+function redo(){if(historyIndex<history.length-1){restore(historyIndex+1);say('Újra végrehajtva')}}
+$('undo').onclick=undo;$('redo').onclick=redo;
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo()}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo()}});
+function getLayer(id){return state.layers.find(l=>l.id===id)||null}
+function getNode(id){for(const l of state.layers){const n=l.nodes.find(n=>n.id===id);if(n)return n}return null}
+function getNodeLayer(id){return state.layers.find(l=>l.nodes.some(n=>n.id===id))||null}
+function getLink(id){return state.links.find(l=>l.id===id)||null}
+function nodeLinks(id,side){return state.links.filter(l=>side==='out'?l.from===id:l.to===id).sort((a,b)=>(side==='out'?a.fromPort-b.fromPort:a.toPort-b.toPort))}
+function portCount(id,side){return nodeLinks(id,side).length+1}
+function portUsed(id,side,index){return state.links.some(l=>side==='out'?l.from===id&&l.fromPort===index:l.to===id&&l.toPort===index)}
+function normalizePorts(){for(const l of state.layers)for(const n of l.nodes){nodeLinks(n.id,'out').forEach((x,i)=>x.fromPort=i);nodeLinks(n.id,'in').forEach((x,i)=>x.toPort=i)}}
+function nodeHeight(n){return Math.max(118,80+Math.max(portCount(n.id,'in'),portCount(n.id,'out'))*PORT_GAP)}
+function layerIndex(id){return state.layers.findIndex(l=>l.id===id)}
+function layerOffset(id){let d=layerIndex(id)-layerIndex(state.activeLayerId);return{x:d*23,y:d*18}}
+function nodeRect(n){let o=layerOffset(getNodeLayer(n.id).id);return{x:n.x+o.x,y:n.y+o.y,w:NODE_W,h:nodeHeight(n)}}
+function portPosition(id,side,index){let n=getNode(id),r=nodeRect(n),count=portCount(id,side);return{x:side==='out'?r.x+r.w:r.x,y:r.y+r.h/2+(index-(count-1)/2)*PORT_GAP}}
+function localPoint(clientX,clientY){let r=ws.getBoundingClientRect();return{x:clientX-r.left,y:clientY-r.top}}
+function say(s){toast.textContent=s;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1800)}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function svgEl(tag,attrs){let e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e}
+function dialog(title,message){$('dialogTitle').textContent=title;$('dialogText').textContent=message;$('shade').style.display='grid';return new Promise(resolve=>gesture.dialogResolve=resolve)}
+function closeDialog(value){$('shade').style.display='none';if(gesture.dialogResolve){let f=gesture.dialogResolve;gesture.dialogResolve=null;f(value)}}
+$('cancel').onclick=()=>closeDialog(false);$('confirm').onclick=()=>closeDialog(true);$('shade').addEventListener('pointerdown',e=>{if(e.target===$('shade'))closeDialog(false)});
+function addPage(x,y){let no=state.nextNode++,l=getLayer(state.activeLayerId);l.nodes.push({id:`page_${no}`,title:`Oldal ${no}`,number:no,x:Math.max(12,x-NODE_W/2),y:Math.max(82,y-48)});render();commit();say(`Oldal ${no} hozzáadva`)}
+function addLayer(){let i=layerIndex(state.activeLayerId),no=state.nextLayer++,l={id:`layer_${no}`,name:`Réteg ${no}`,nodes:[]};state.layers.splice(i+1,0,l);state.layers.forEach((x,j)=>x.order=j);state.activeLayerId=l.id;render();commit();say(`${l.name} létrehozva`)}
+function switchLayer(delta){let i=layerIndex(state.activeLayerId),j=Math.max(0,Math.min(state.layers.length-1,i+delta));if(i!==j){state.activeLayerId=state.layers[j].id;render()}}
+function selectLayer(id){if(getLayer(id)){state.activeLayerId=id;render()}}
+async function deleteLayer(){if(state.layers.length===1){say('Az utolsó réteg nem törölhető');return}let l=getLayer(state.activeLayerId),idx=layerIndex(l.id),ids=new Set(l.nodes.map(n=>n.id));if(!await dialog(`${l.name} törlése?`,`${l.nodes.length} oldal és az érintett Path-kapcsolatok is törlődnek.`))return;state.layers=state.layers.filter(x=>x.id!==l.id);state.links=state.links.filter(x=>!ids.has(x.from)&&!ids.has(x.to));state.layers.forEach((x,i)=>x.order=i);state.activeLayerId=state.layers[Math.max(0,idx-1)].id;normalizePorts();render();commit();say('Réteg törölve')}
+async function deleteNode(id){let n=getNode(id);if(!n)return;if(!await dialog(`${n.title} törlése?`,'A hozzá tartozó Path-kapcsolatok is törlődnek.'))return;state.layers.forEach(l=>l.nodes=l.nodes.filter(x=>x.id!==id));state.links=state.links.filter(x=>x.from!==id&&x.to!==id);normalizePorts();render();commit();say('Oldal törölve')}
+function hasPair(a,b,exceptId=null){return state.links.some(l=>l.id!==exceptId&&((l.from===a&&l.to===b)||(l.from===b&&l.to===a)))}
+function connect(source,target){
+ let out=source.side==='out'?source:target,inport=source.side==='in'?source:target;
+ if(out.side!=='out'||inport.side!=='in'){say('Kimenetet bemenettel kapcsolj össze');return}
+ // The drop endpoint must belong to the currently active layer. Cross-layer
+ // connections are therefore explicit: SHIFT+Arrow changes the target layer.
+ if(getNodeLayer(target.id)?.id!==state.activeLayerId){say('Rétegközi bekötéshez válts a célrétegre SHIFT + nyíllal');return}
+ if(out.id===inport.id){say('Egy oldal önmagához nem kapcsolható');return}
+ if(hasPair(out.id,inport.id)){say('Ez az oldal-pár már össze van kötve');return}
+ if(portUsed(out.id,'out',out.index)||portUsed(inport.id,'in',inport.index)){say('A kiválasztott port foglalt');return}
+ state.links.push({id:`path_${state.nextLink++}`,from:out.id,fromPort:out.index,to:inport.id,toPort:inport.index,effect:null});
+ normalizePorts();render();commit();say('Path létrehozva')
+}
+function beginPort(id,side,index,e){
+ e.preventDefault();e.stopPropagation();
+ let existing=state.links.find(l=>side==='out'?l.from===id&&l.fromPort===index:l.to===id&&l.toPort===index);
+ gesture.connection=existing?{mode:'move',linkId:existing.id,dragSide:side,source:{id,side,index},cursor:localPoint(e.clientX,e.clientY),pointerId:e.pointerId}:{mode:'new',source:{id,side,index},cursor:localPoint(e.clientX,e.clientY),pointerId:e.pointerId};
+ drawLinks()
+}
+function findPortAt(clientX,clientY){
+ // Hit-test only the active layer's real port elements. This avoids selecting
+ // an SVG path, a translucent inactive node, or a decorative overlay first.
+ let candidates=[...ws.querySelectorAll('.layer-plane.active .port')],best=null,bestD=Infinity;
+ for(const el of candidates){
+  const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const d=Math.hypot(clientX-cx,clientY-cy);
+  if(d<=19&&d<bestD){best=el;bestD=d}
+ }
+ return best;
+}
+function finishPort(e){
+ let g=gesture.connection;gesture.connection=null;
+ let el=findPortAt(e.clientX,e.clientY);
+ if(!el){drawLinks();return}
+ let target={id:el.dataset.id,side:el.dataset.side,index:+el.dataset.index};
+ if(g.mode==='new'){connect(g.source,target);return}
+ let l=getLink(g.linkId);if(!l)return;
+ if(target.side!==g.dragSide){say('A kapcsolat végét azonos típusú szabad portra húzd');drawLinks();return}
+ const sameEndpoint=g.dragSide==='out'?(target.id===l.from&&target.index===l.fromPort):(target.id===l.to&&target.index===l.toPort);
+ if(sameEndpoint){drawLinks();return}
+ let other=g.dragSide==='out'?l.to:l.from;
+ if(target.id===other||hasPair(target.id,other,l.id)||portUsed(target.id,target.side,target.index)){say('Ez a célport nem használható');drawLinks();return}
+ if(g.dragSide==='out'){l.from=target.id;l.fromPort=target.index}else{l.to=target.id;l.toPort=target.index}
+ normalizePorts();render();commit();say('Kapcsolat áthelyezve')
+}
+function setEffect(id,effect){let l=getLink(id);if(!l)return;l.effect=effect==='none'?null:effect;menu.style.display='none';render();commit();say(effect==='none'?'Effekt eltávolítva':`${EFFECT[effect]} hozzáadva`)}
+function openEffectMenu(id,x,y){gesture.menuLinkId=id;menu.style.left=`${Math.min(x,innerWidth-195)}px`;menu.style.top=`${Math.min(y,innerHeight-250)}px`;menu.style.display='block'}
+function deleteLink(id){
+ const i=state.links.findIndex(l=>l.id===id);if(i<0)return;
+ state.links.splice(i,1);normalizePorts();menu.style.display='none';render();commit();say('Path törölve');
+}
+menu.addEventListener('click',e=>{
+ let action=e.target.closest('[data-action]');
+ if(action&&action.dataset.action==='delete-link'&&gesture.menuLinkId){deleteLink(gesture.menuLinkId);return}
+ let b=e.target.closest('[data-effect]');if(b&&gesture.menuLinkId)setEffect(gesture.menuLinkId,b.dataset.effect)
+});
+document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target)&&!e.target.closest('.path-point'))menu.style.display='none'});
+/* Deterministic obstacle-avoiding router.
+   A visibility grid routes around padded node rectangles. The resulting
+   polyline is rendered with rounded quadratic corners, so the route stays
+   clear of nodes without the old arbitrary Bézier lane guesses. */
+function obstacleRects(layerIds,excludeIds){
+ let out=[];
+ for(const id of layerIds){
+  let l=getLayer(id);if(!l)continue;
+  for(const n of l.nodes){
+   if(excludeIds.includes(n.id))continue;
+   let r=nodeRect(n);
+   out.push({left:r.x-46,right:r.x+r.w+46,top:r.y-46,bottom:r.y+r.h+46});
+  }
+ }
+ return out;
+}
+function pointInside(p,rs){
+ return rs.some(r=>p.x>r.left+0.5&&p.x<r.right-0.5&&p.y>r.top+0.5&&p.y<r.bottom-0.5);
+}
+function segmentClear(a,b,rs){
+ // All visibility-grid edges are axis aligned.
+ let mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+ if(pointInside(mid,rs))return false;
+ for(const r of rs){
+  if(Math.abs(a.y-b.y)<.01){
+   if(a.y>r.top+.5&&a.y<r.bottom-.5&&Math.max(Math.min(a.x,b.x),r.left)<Math.min(Math.max(a.x,b.x),r.right)-.5)return false;
+  }else if(Math.abs(a.x-b.x)<.01){
+   if(a.x>r.left+.5&&a.x<r.right-.5&&Math.max(Math.min(a.y,b.y),r.top)<Math.min(Math.max(a.y,b.y),r.bottom)-.5)return false;
+  }
+ }
+ return true;
+}
+function routePoints(a,b,layerIds,excludeIds){
+ const rs=obstacleRects(layerIds,excludeIds);
+ const xs=[a.x,b.x],ys=[a.y,b.y];
+ for(const r of rs){xs.push(r.left,r.right);ys.push(r.top,r.bottom)}
+ const margin=72;
+ xs.push(Math.min(a.x,b.x,...rs.map(r=>r.left))-margin,Math.max(a.x,b.x,...rs.map(r=>r.right))+margin);
+ ys.push(Math.min(a.y,b.y,...rs.map(r=>r.top))-margin,Math.max(a.y,b.y,...rs.map(r=>r.bottom))+margin);
+ const uniq=v=>[...new Set(v.map(x=>Math.round(x*10)/10))].sort((x,y)=>x-y);
+ const X=uniq(xs),Y=uniq(ys),nx=X.length,ny=Y.length;
+ const id=(i,j)=>i*ny+j, coords=k=>({x:X[Math.floor(k/ny)],y:Y[k%ny]});
+ let start=id(X.indexOf(Math.round(a.x*10)/10),Y.indexOf(Math.round(a.y*10)/10));
+ let goal=id(X.indexOf(Math.round(b.x*10)/10),Y.indexOf(Math.round(b.y*10)/10));
+ const valid=new Set();
+ for(let i=0;i<nx;i++)for(let j=0;j<ny;j++){let k=id(i,j);if(!pointInside(coords(k),rs)||k===start||k===goal)valid.add(k)}
+ if(!valid.has(start)||!valid.has(goal))return null;
+ const dirs=[[-1,0,'h'],[1,0,'h'],[0,-1,'v'],[0,1,'v']];
+ const key=(k,d)=>`${k}|${d}`;
+ let dist=new Map([[key(start,'0'),0]]),prev=new Map(),open=[{k:start,d:'0',g:0}],best=null;
+ while(open.length){
+  open.sort((u,v)=>u.g-v.g);
+  const cur=open.shift(),ck=key(cur.k,cur.d);
+  if(cur.g!==dist.get(ck))continue;
+  if(cur.k===goal){best=ck;break}
+  const i=Math.floor(cur.k/ny),j=cur.k%ny,p=coords(cur.k);
+  for(const [di,dj,dir] of dirs){
+   const ii=i+di,jj=j+dj;if(ii<0||ii>=nx||jj<0||jj>=ny)continue;
+   const nk=id(ii,jj);if(!valid.has(nk))continue;
+   const q=coords(nk);if(!segmentClear(p,q,rs))continue;
+   const cost=Math.abs(q.x-p.x)+Math.abs(q.y-p.y)+(cur.d!=='0'&&cur.d!==dir?165:0);
+   const ng=cur.g+cost,nkey=key(nk,dir);
+   if(ng<(dist.get(nkey)??Infinity)){dist.set(nkey,ng);prev.set(nkey,ck);open.push({k:nk,d:dir,g:ng})}
+  }
+ }
+ if(!best)return null;
+ let ids=[best];while(prev.has(ids[ids.length-1]))ids.push(prev.get(ids[ids.length-1]));ids.reverse();
+ let pts=ids.map(k=>coords(Number(k.split('|')[0])));
+ // Remove collinear intermediate points.
+ let simple=[];
+ for(const p of pts){if(simple.length>=2){let u=simple[simple.length-2],v=simple[simple.length-1];if((Math.abs(u.x-v.x)<.1&&Math.abs(v.x-p.x)<.1)||(Math.abs(u.y-v.y)<.1&&Math.abs(v.y-p.y)<.1)){simple[simple.length-1]=p;continue}}simple.push(p)}
+ return simple;
+}
+function roundedRoutePath(points){
+ if(!points||points.length<2)return '';
+ let d=`M ${points[0].x} ${points[0].y}`,radius=30;
+ for(let i=1;i<points.length-1;i++){
+  const a=points[i-1],p=points[i],b=points[i+1];
+  const d1=Math.hypot(p.x-a.x,p.y-a.y),d2=Math.hypot(b.x-p.x,b.y-p.y);
+  const r=Math.min(radius,d1*.42,d2*.42);
+  const before={x:p.x+(a.x-p.x)/d1*r,y:p.y+(a.y-p.y)/d1*r};
+  const after={x:p.x+(b.x-p.x)/d2*r,y:p.y+(b.y-p.y)/d2*r};
+  d+=` L ${before.x} ${before.y} Q ${p.x} ${p.y} ${after.x} ${after.y}`;
+ }
+ const last=points[points.length-1];d+=` L ${last.x} ${last.y}`;return d;
+}
+function cubicPath(a,b,rs){
+ const dx=b.x-a.x,dy=b.y-a.y;
+ const dir=Math.abs(dx)>8?(dx>0?1:-1):(dy>0?1:-1);
+ const handle=Math.max(64,Math.min(190,Math.abs(dx)*.44+Math.abs(dy)*.08));
+ const p1={x:a.x+dir*handle,y:a.y};
+ const p2={x:b.x-dir*handle,y:b.y};
+ const inside=(p)=>rs.some(r=>p.x>r.left&&p.x<r.right&&p.y>r.top&&p.y<r.bottom);
+ let clear=true;
+ for(let i=1;i<100;i++){
+  const t=i/100,u=1-t;
+  const p={x:u*u*u*a.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*b.x,
+           y:u*u*u*a.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*b.y};
+  if(inside(p)){clear=false;break}
+ }
+ return clear?`M ${a.x} ${a.y} C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${b.x} ${b.y}`:null;
+}
+function makeCurve(a,b,layerIds,excludeIds){
+ const rs=obstacleRects(layerIds,excludeIds);
+ const direct=cubicPath(a,b,rs);
+ if(direct)return direct;
+ const points=routePoints(a,b,layerIds,excludeIds);
+ if(points&&points.length>1)return {d:roundedRoutePath(points),blocked:false};
+ // No valid corridor exists. Keep the connection visible, but explicitly mark
+ // it as blocked instead of silently pretending that this is a valid route.
+ return {d:`M ${a.x} ${a.y} C ${a.x+55} ${a.y}, ${b.x-55} ${b.y}, ${b.x} ${b.y}`,blocked:true};
+}
+function drawLinks(){
+ let r=ws.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);svg.innerHTML='';
+ for(const l of state.links){
+  let la=getNodeLayer(l.from),lb=getNodeLayer(l.to);if(!la||!lb)continue;
+  let a=portPosition(l.from,'out',l.fromPort),b=portPosition(l.to,'in',l.toPort),cross=la.id!==lb.id;
+  let d=makeCurve(a,b,cross?[la.id,lb.id]:[la.id],[l.from,l.to]);
+  let activeEndpoint=la.id===state.activeLayerId||lb.id===state.activeLayerId;
+  let path=svgEl('path',{d,class:`path${cross?' cross':''}${activeEndpoint?'':' dim'}`,'data-link':l.id});
+  path.addEventListener('click',e=>{e.stopPropagation();openEffectMenu(l.id,e.clientX,e.clientY)});svg.appendChild(path);
+  try{let mid=path.getPointAtLength(path.getTotalLength()/2),dot=svgEl('circle',{cx:mid.x,cy:mid.y,r:5.5,class:`path-point${l.effect?' has-effect':''}`,'data-link':l.id});
+   dot.addEventListener('click',e=>{e.stopPropagation();openEffectMenu(l.id,e.clientX,e.clientY)});svg.appendChild(dot);
+   if(l.effect){let label=svgEl('text',{x:mid.x+10,y:mid.y-8,class:'path-label'});label.textContent=EFFECT[l.effect];svg.appendChild(label)}
+  }catch(_){}
+ }
+ if(gesture.connection?.cursor){let s=gesture.connection.source,p=portPosition(s.id,s.side,s.index),q=gesture.connection.cursor,dir=s.side==='out'?1:-1;
+  svg.appendChild(svgEl('path',{d:`M ${p.x} ${p.y} C ${p.x+dir*60} ${p.y}, ${q.x-dir*60} ${q.y}, ${q.x} ${q.y}`,class:'path preview'}))}
+}
+function renderNode(n,layerId){
+ let el=document.createElement('div');el.className='node';el.dataset.node=n.id;let o=layerOffset(layerId);
+ el.style.left=(n.x+o.x)+'px';el.style.top=(n.y+o.y)+'px';el.style.height=nodeHeight(n)+'px';
+ el.innerHTML=`<div class="node-head"><span class="kind">OLDAL</span><span class="node-title">${esc(n.title)}</span><span class="node-id">P${n.number}</span><button class="remove" title="Oldal törlése">×</button></div><div class="node-body">▤ &nbsp;Tartalmi oldal</div><div class="node-foot">Tartalom még nincs hozzárendelve</div>`;
+ el.querySelector('.remove').addEventListener('pointerdown',e=>e.stopPropagation());el.querySelector('.remove').onclick=e=>{e.stopPropagation();deleteNode(n.id)};
+ for(const side of ['in','out']){let c=portCount(n.id,side);for(let i=0;i<c;i++){let p=document.createElement('div');p.className=`port ${side}${portUsed(n.id,side,i)?' used':''}`;p.dataset.id=n.id;p.dataset.side=side;p.dataset.index=i;p.style.top=(nodeHeight(n)/2+(i-(c-1)/2)*PORT_GAP)+'px';p.style[side==='in'?'left':'right']='-8px';p.addEventListener('pointerdown',e=>beginPort(n.id,side,i,e));el.appendChild(p)}}
+ el.querySelector('.node-head').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;e.preventDefault();e.stopPropagation();if(layerId!==state.activeLayerId){say('A mozgatáshoz válts az oldal rétegére');return}let p=localPoint(e.clientX,e.clientY);gesture.node={id:n.id,dx:p.x-(n.x+o.x),dy:p.y-(n.y+o.y),startX:n.x,startY:n.y}});
+ return el
+}
+function renderTabs(){
+ tabs.innerHTML='';
+ state.layers.forEach((l,i)=>{let b=document.createElement('button');b.className=`layer-tab${l.id===state.activeLayerId?' active':''}`;b.innerHTML=`${i+1}. ${esc(l.name)} <span class="count">${l.nodes.length} oldal</span>`;b.onclick=()=>selectLayer(l.id);tabs.appendChild(b)});
+ let del=document.createElement('button');del.className='btn';del.textContent='Réteg törlése';del.style.flex='none';del.onclick=deleteLayer;tabs.appendChild(del);
+ let active=layerIndex(state.activeLayerId);tabs.scrollLeft=Math.max(0,(active-2)*115);
+}
+function render(){
+ planes.innerHTML='';
+ state.layers.forEach((l,i)=>{let d=i-layerIndex(state.activeLayerId),o=layerOffset(l.id),plane=document.createElement('div');plane.className=`layer-plane ${l.id===state.activeLayerId?'active':'inactive'}`;plane.style.transform=`translate(${o.x}px,${o.y}px)`;plane.style.zIndex=String(20-Math.abs(d));plane.innerHTML=`<div class="plane-frame"></div><div class="plane-caption">${esc(l.name)}${l.id===state.activeLayerId?' · AKTÍV':''}</div>`;l.nodes.forEach(n=>plane.appendChild(renderNode(n,l.id)));planes.appendChild(plane)});
+ renderTabs();$('empty').style.display=state.layers.some(l=>l.nodes.length)?'none':'grid';drawLinks()
+}
+function cancelTransient(){
+ if(gesture.node){let n=getNode(gesture.node.id);if(n){n.x=gesture.node.startX;n.y=gesture.node.startY}}
+ gesture.shelf=null;gesture.node=null;gesture.connection=null;ghost.style.display='none';menu.style.display='none'
+}
+function startModuleDrag(m,e){e.preventDefault();gesture.shelf={kind:m.dataset.kind,effect:m.dataset.effect};ghost.textContent=m.dataset.kind==='page'?'▱  Új oldal':m.dataset.kind==='layer'?'▤  Új réteg':`✧  ${EFFECT[m.dataset.effect]}`;ghost.style.display='block';ghost.style.left=e.clientX+12+'px';ghost.style.top=e.clientY+12+'px'}
+document.querySelectorAll('.module').forEach(m=>m.addEventListener('pointerdown',e=>startModuleDrag(m,e)));
+document.addEventListener('pointermove',e=>{
+ if(gesture.shelf){ghost.style.left=e.clientX+12+'px';ghost.style.top=e.clientY+12+'px';return}
+ if(gesture.node){let n=getNode(gesture.node.id),o=layerOffset(getNodeLayer(n.id).id),p=localPoint(e.clientX,e.clientY);n.x=Math.max(0,p.x-gesture.node.dx-o.x);n.y=Math.max(78,p.y-gesture.node.dy-o.y);let el=ws.querySelector(`[data-node="${n.id}"]`);if(el){el.style.left=(n.x+o.x)+'px';el.style.top=(n.y+o.y)+'px'}drawLinks();return}
+ if(gesture.connection){gesture.connection.cursor=localPoint(e.clientX,e.clientY);drawLinks()}
+});
+document.addEventListener('pointerup',e=>{
+ if(gesture.shelf){let g=gesture.shelf;gesture.shelf=null;ghost.style.display='none';let r=ws.getBoundingClientRect(),inside=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;if(!inside)return;let p=localPoint(e.clientX,e.clientY);if(g.kind==='page')addPage(p.x,p.y);else if(g.kind==='layer')addLayer();else{let hit=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-link]');if(hit)setEffect(hit.dataset.link,g.effect);else say('Az effektet egy Path középpontjára húzd')}return}
+ if(gesture.node){let g=gesture.node;gesture.node=null;let n=getNode(g.id);if(n&&(n.x!==g.startX||n.y!==g.startY))commit();drawLinks();return}
+ if(gesture.connection)finishPort(e)
+});
+window.addEventListener('keydown',e=>{
+ if(gesture.connection && e.shiftKey && (e.key==='ArrowRight'||e.key==='ArrowLeft')){
+  e.preventDefault();e.stopPropagation();
+  const before=state.activeLayerId;
+  switchLayer(e.key==='ArrowRight'?1:-1);
+  if(before!==state.activeLayerId)say(`Célréteg: ${getLayer(state.activeLayerId).name} · engedd el a porton`);
+  if(!gesture.connection.cursor)gesture.connection.cursor={x:ws.clientWidth/2,y:ws.clientHeight/2};
+  drawLinks();
+ }
+},true);
+window.addEventListener('pointercancel',()=>{cancelTransient();render()});
+window.addEventListener('blur',()=>{cancelTransient();render()});
+window.addEventListener('resize',drawLinks);
+ws.addEventListener('pointerdown',e=>{if(e.target===ws||e.target===planes)document.querySelectorAll('.node.selected').forEach(n=>n.classList.remove('selected'))});
+commit();render();
+})();
+</script>
+</body></html>
